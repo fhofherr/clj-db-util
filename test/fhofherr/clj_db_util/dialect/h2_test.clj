@@ -134,4 +134,15 @@
           [:INTEGRAL-NUMBER "1"]
           [:EQ]
           [:INTEGRAL-NUMBER "1"]])
-      (h2/h2-parser "select * from dual where 1 = 1" :start :SELECT-STMT)))
+      (h2/h2-parser "select * from dual where 1 = 1" :start :SELECT-STMT))
+  (is (= [:SELECT-STMT
+          [:SELECT]
+          [:SELECT-EXPR "*"]
+          [:FROM]
+          [:TABLE-EXPR
+           [:TABLE-NAME "dual"]]
+          [:WHERE]
+          [:INTEGRAL-NUMBER "1"]
+          [:EQ]
+          [:NAMED-PARAM "number"]])
+      (h2/h2-parser "select * from dual where 1 = :number" :start :SELECT-STMT)))
