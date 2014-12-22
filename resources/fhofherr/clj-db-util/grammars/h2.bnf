@@ -47,7 +47,7 @@ SEQUENCE-NAME ::= NAME;
     NOT? LIKE OPERAND (ESCAPE STRING)? |
     NOT? REGEXP OPERAND;
 
-<OPERAND> ::= (SUMMAND (CONCAT SUMMAND)* | NAMED-PARAM);
+<OPERAND> ::= (SUMMAND (CONCAT SUMMAND)* | NAMED-PARAM | PARAM);
 
 <SUMMAND> ::= FACTOR (('+' | '-') FACTOR)*;
 
@@ -187,4 +187,5 @@ WHERE          ::= <#'(?i)\s*where\s*'>;
 
 (* Extension: named parameters *)
 
+PARAM ::= <"?">
 NAMED-PARAM ::= <":"> #"(?i)[A-Z_][A-Z0-9_]*";
