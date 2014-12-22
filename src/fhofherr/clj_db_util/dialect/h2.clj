@@ -5,3 +5,6 @@
 (def h2-parser (-> "fhofherr/clj-db-util/grammars/h2.bnf"
                    (resource)
                    (insta/parser)))
+
+(def replacements {:EQ "="
+                   :PARAM "?"})
