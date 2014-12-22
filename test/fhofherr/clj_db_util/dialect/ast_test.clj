@@ -27,3 +27,19 @@
   (is (nil? (ast/token-to-str (zip/next (ast/zip [:RULE "VALUE"])))))
   (is (nil? (ast/token-to-str (ast/zip ["_NAME"]))))
   (is (nil? (ast/token-to-str (ast/zip [:RULE "VALUE"])))))
+
+(deftest convert-ast-to-string
+  (let [ast [:S
+             [:DML
+              [:SELECT-STMT
+               [:SELECT]
+               [:SELECT-EXPR "*"]
+               [:FROM]
+               [:TABLE-EXPR [:TABLE-NAME "dual"]]
+               [:WHERE]
+               [:INTEGRAL-NUMBER "1"]
+               [:EQ]
+               [:PARAM]]]]
+        replacements {:PARAM "?" :EQ "="}]
+    (is (= "SELECT * FROM dual WHERE 1 = ?"
+           (ast/ast-to-str ast replacements)))))

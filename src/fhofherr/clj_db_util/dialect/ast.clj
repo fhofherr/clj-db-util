@@ -91,3 +91,22 @@
             rule (get-rule loc)]
         (get rs rule (name rule)))
       (str (zip/node loc)))))
+
+(defn ast-to-str
+  "Convert the given `ast` to as string using the given `replacements` for
+  tokens whose canonical string representation is not desired.
+
+  *Parameters*:
+
+  - `ast` the abstract syntax tree to convert to a string.
+  - `replacements` (optional) map of replacement values for rule names if the
+    default string representation of the rule name is not desired."
+  [ast & [replacements]]
+  (letfn [(build-strs [[ss loc]]
+            [(conj ss (token-to-str loc replacements)) (zip/next loc)])]
+    (->> [[] (zip ast)]
+      (iterate build-strs)
+      (drop-while (fn [[_ l]] (not (zip/end? l))))
+      (ffirst)
+      (filter (complement nil?))
+      (clojure.string/join " "))))
