@@ -6,5 +6,15 @@
                    (resource)
                    (insta/parser)))
 
-(def replacements {:EQ "="
-                   :PARAM "?"})
+(def replacements {:CONCAT "||"
+                   :EQ "="
+                   :GEQ ">="
+                   :GT ">"
+                   :LEQ "<="
+                   :LT "<"
+                   :NEQ "<>"
+                   :PARAM "?"
+
+                   :DISTINCT-FROM "DISTINCT FROM"
+                   :NEXT-VALUE-FOR "NEXT VALUE FOR"
+                   :OVERLAPPING "&&"})
