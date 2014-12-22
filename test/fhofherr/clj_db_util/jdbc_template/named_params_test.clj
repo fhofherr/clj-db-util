@@ -20,3 +20,10 @@
         param-list [:param1 :param2 :param3]]
     (is (= [param-list expected-ast]
            (np/extract-named-params ast)))))
+
+(deftest make-argv
+  (is (= ["value1" "value2" "value3"]
+         (np/make-argv [:param1 :param2 :param3]
+                       {:param1 "value1"
+                        :param2 "value2"
+                        :param3 "value3"}))))

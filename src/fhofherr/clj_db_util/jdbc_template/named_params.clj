@@ -22,3 +22,7 @@
                        (drop-while (fn [[_ l]] (not (zip/end? l))))
                        (first))]
     [res (zip/root loc)]))
+
+(defn make-argv
+  [params dict]
+  (for [p params] (get dict p)))
