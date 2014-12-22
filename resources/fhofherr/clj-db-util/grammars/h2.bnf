@@ -36,7 +36,7 @@ SEQUENCE-NAME ::= NAME;
 
 <CONDITION> ::= OPERAND CONDITION-RIGHT-HAND-SIDE? |
                 NOT CONDITION |
-                EXISTS <"("> SELECT-STMT <")">;
+                EXISTS "(" SELECT-STMT ")";
 
 <CONDITION-RIGHT-HAND-SIDE> ::=
     (COMPARE (((ALL | ANY | SOME) <"("> SELECT-STMT <")">) | OPERAND)) |
@@ -47,7 +47,7 @@ SEQUENCE-NAME ::= NAME;
     NOT? LIKE OPERAND (ESCAPE STRING)? |
     NOT? REGEXP OPERAND;
 
-<OPERAND> ::= (SUMMAND (CONCAT SUMMAND)* | NAMED-PARAM | PARAM);
+<OPERAND> ::= (SUMMAND (CONCAT SUMMAND)*) | NAMED-PARAM | PARAM;
 
 <SUMMAND> ::= FACTOR (('+' | '-') FACTOR)*;
 
@@ -154,7 +154,7 @@ ANY            ::= <#'(?i)\s*any\s*'>;
 AS             ::= <#'(?i)\s*as\s*'>;
 BETWEEN        ::= <#'(?i)\s*between\s*'>;
 CASE           ::= <#'(?i)\s*case\s*'>;
-CONCAT         ::= <#'\s*||\s*'>;
+CONCAT         ::= <#'\s*\|\|\s*'>;
 DISTINCT-FROM  ::= <#'(?i)\s*null\s*'>;
 DISTINCT       ::= <#'(?i)\s*distinct\s*'>;
 ELSE           ::= <#'(?i)\s*else\s*'>;
