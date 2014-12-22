@@ -188,4 +188,4 @@ WHERE          ::= <#'(?i)\s*where\s*'>;
 (* Extension: named parameters *)
 
 PARAM ::= <"?">
-NAMED-PARAM ::= <":"> #"(?i)[A-Z_][A-Z0-9_]*";
+NAMED-PARAM ::= <":"> #"(?i)[A-Z_][A-Z0-9_-]*";
