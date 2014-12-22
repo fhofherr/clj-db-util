@@ -45,3 +45,26 @@
   [loc]
   (when (rule? loc)
     (first (zip/children loc))))
+
+(defn token?
+  "Check if the current location within the AST is a token.
+
+  A location is considered to be a token if it is a [[rule?]] and has no
+  children except for the rule's name, or if it is a leaf node.
+
+  *Examples*:
+
+  - `[:SELECT]` is a token since it is a [[rule?]] and has no children except
+     for its rule name.
+  - `[:SELECT-EXPR \"*\"]` is not a token since it is a [[rule?]] but has more
+     than one child.
+  - `\"1\"` is a token since it is not a branch.
+  - `[\"_NAME\"]` is not a token since it is a branch but no [[rule?]].
+
+   *Parameters*:
+
+  - `loc` a location within the AST."
+  [loc]
+  (or (and (rule? loc)
+           (= 1 (count (zip/children loc))))
+      (not (zip/branch? loc))))
