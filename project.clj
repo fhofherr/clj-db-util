@@ -9,5 +9,8 @@
                  [org.clojure/java.jdbc "0.3.6"]
                  [instaparse "1.3.5"]]
   :profiles  {:dev  {:source-paths ["dev"]
+                     :plugins [[codox "0.8.10"]]
+                     :codox {:output-dir "target/codox"
+                             :defaults {:doc/format :markdown}}
                      :dependencies [[org.clojure/tools.namespace "0.2.7"]
                                     [com.h2database/h2 "1.4.183"]]}})

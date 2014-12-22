@@ -2,27 +2,77 @@
   (:require [clojure.zip :as zip]
             [fhofherr.clj-db-util.dialect.ast :as ast]))
 
+(defn named-param?
+  "Check if given location within an AST represents a named parameter.
+
+  The location within the AST has to be a rule as defined by [[ast/rule?]] and
+  its rule name has to be `:NAMED-PARAM`.
+
+  *Parameters*:
+
+  - `loc` a location within an AST."
+  [loc]
+  (and (ast/rule? loc)
+       (= :NAMED-PARAM (ast/get-rule loc))))
+
+(defn param?
+  "Check if given location within an AST represents a positional parameter.
+
+  The location within the AST has to be a rule as defined by [[ast/rule?]] and
+  its rule name has to be `:PARAM`.
+
+  *Parameters*:
+
+  - `loc` a location within an AST."
+  [loc]
+  (and (ast/rule? loc)
+       (= :PARAM (ast/get-rule loc))))
+
 (defn- do-extract
-  [[res loc]]
-  (if (and (ast/rule? loc)
-           (= :NAMED-PARAM (ast/get-rule loc)))
+  [[ps loc]]
+  (if (named-param? loc)
     (let [param-name (-> loc
                          (zip/children)
                          (second)
                          (clojure.string/lower-case)
                          (keyword))
           next-loc (zip/next (zip/replace loc [:PARAM]))]
-      [(conj res param-name) next-loc])
-    [res (zip/next loc)]))
+      [(conj ps param-name) next-loc])
+    [ps (zip/next loc)]))
 
 (defn extract-named-params
+  "Extract all named parameters from the given abstract sytnax tree.
+  Additionally replace all occurences of named parameters by positional
+  parameters.
+
+  Return a tuple `[ps t]` where `ps` is a collection of all names of named
+  parameters as found during a depth first traversal of the AST. The parameter
+  names in `ps` are converted to lower-cased keywords. `t` is the mofified AST
+  containing positional parameters for all named parameters.
+
+  See [[named-param?]] for the definition of named parameters and
+  [[param?]] for the definition of positional parameters.
+
+  *Parameters*:
+
+  - `tree` the AST to process."
   [tree]
-  (let [[res loc] (->> [[] (ast/zip tree)]
+  (let [[ps loc] (->> [[] (ast/zip tree)]
                        (iterate do-extract)
                        (drop-while (fn [[_ l]] (not (zip/end? l))))
                        (first))]
-    [res (zip/root loc)]))
+    [ps (zip/root loc)]))
 
 (defn make-argv
-  [params dict]
-  (for [p params] (get dict p)))
+  "Create a lazy sequence of values to substitute for the parameter names given
+  in `ps`.
+
+  Uses the map `m` to lookup the values. The returned lazy seq contains the
+  values in the order defined by the order of the parameter names in `ps`.
+
+  *Parameters*:
+
+  - `ps` a sequential collection of parameter names.
+  - `m` a map mapping the parameter names to their desired values."
+  [ps m]
+  (for [p ps] (get m p)))
