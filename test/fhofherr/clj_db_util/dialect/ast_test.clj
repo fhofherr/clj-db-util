@@ -15,4 +15,15 @@
   (is (true? (ast/token? (ast/zip [:RULE-NAME]))))
   (is (false? (ast/token? (ast/zip ["_NAME"]))))
   (is (false? (ast/token? (ast/zip [:RULE "VALUE"]))))
-  (is (true? (ast/token? (zip/next (ast/zip [:RULE "VALUE"]))))))
+  (is (false? (ast/token? (zip/next (ast/zip [:RULE "VALUE"])))))
+  (is (true? (ast/token? (zip/next (zip/next (ast/zip [:RULE "VALUE"])))))))
+
+(deftest convert-token-to-string
+  (is (= "RULE-NAME" (ast/token-to-str (ast/zip [:RULE-NAME]))))
+  (is (= "VALUE"
+         (ast/token-to-str (zip/next (zip/next (ast/zip [:RULE "VALUE"]))))))
+  (is (= "REPLACEMENT" (ast/token-to-str (ast/zip [:RULE-NAME])
+                                         {:RULE-NAME "REPLACEMENT"})))
+  (is (nil? (ast/token-to-str (zip/next (ast/zip [:RULE "VALUE"])))))
+  (is (nil? (ast/token-to-str (ast/zip ["_NAME"]))))
+  (is (nil? (ast/token-to-str (ast/zip [:RULE "VALUE"])))))

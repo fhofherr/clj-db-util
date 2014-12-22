@@ -50,7 +50,8 @@
   "Check if the current location within the AST is a token.
 
   A location is considered to be a token if it is a [[rule?]] and has no
-  children except for the rule's name, or if it is a leaf node.
+  children except for the rule's name, or if it is a leaf node and not a
+  keyword representing the name of a rule.
 
   *Examples*:
 
@@ -58,7 +59,7 @@
      for its rule name.
   - `[:SELECT-EXPR \"*\"]` is not a token since it is a [[rule?]] but has more
      than one child.
-  - `\"1\"` is a token since it is not a branch.
+  - `\"1\"` is a token since it is not a branch and not a keyword.
   - `[\"_NAME\"]` is not a token since it is a branch but no [[rule?]].
 
    *Parameters*:
@@ -67,4 +68,26 @@
   [loc]
   (or (and (rule? loc)
            (= 1 (count (zip/children loc))))
-      (not (zip/branch? loc))))
+      (and (not (zip/branch? loc))
+           ;; TODO: It is possible to obtain the rule names used by an
+           ;; instaparse parser, e.g. (keys (:grammar parser)). This
+           ;; might be useful here.
+           (not (keyword? (zip/node loc))))))
+
+(defn token-to-str
+  "If the location of the AST is a [[token?]] return the token's string
+  representation. Return `nil` if the location does not represent a [[token?]].
+
+   *Parameters*:
+
+  - `loc` a location within the AST.
+  - `replacements` (optional) map of replacement values for rule names if the
+    default string representation of the rule name is not desired."
+  [loc & [replacements]]
+  {:pre [(or (nil? replacements) (map? replacements))]}
+  (when (token? loc)
+    (if (rule? loc)
+      (let [rs (or replacements {})
+            rule (get-rule loc)]
+        (get rs rule (name rule)))
+      (str (zip/node loc)))))
