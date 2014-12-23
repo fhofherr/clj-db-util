@@ -57,11 +57,7 @@
 
   - `tree` the AST to process."
   [tree]
-  (let [[ps loc] (->> [[] (ast/zip tree)]
-                       (iterate do-extract)
-                       (drop-while (fn [[_ l]] (not (zip/end? l))))
-                       (first))]
-    [ps (zip/root loc)]))
+  (ast/iterate-ast do-extract [] tree))
 
 (defn make-argv
   "Create a lazy sequence of values to substitute for the parameter names given

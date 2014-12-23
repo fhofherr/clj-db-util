@@ -14,6 +14,51 @@
   [root]
   (zip/vector-zip root))
 
+(defn iterate-ast
+  "Eagerly iterate over the AST `ast` by repeatedly applying the function `f`.
+
+  `f` is a function of one argument which is a 2-tuple of `[a l]`, where `a` is
+  an arbitrary accumulator value, or `nil` if no accumulation is desired. The
+  initial value for `a` has to be supplied to `iterate-ast` by the argument
+  `acc`. The second part `l` of the tuple passed to `f` represents the current
+  location within the AST. `f` must return a 2 or 3-tuple `[a* l*]`, or
+  `[a* l* s]` respectively. `a*` is the modified accumulator `a`, or `nil` if no
+  accumulation is desired. `l*` represents the next location in the AST.  `l*`
+  must never be `nil`. If `s` is present in the tuple returned by `f` and if
+  `s` equals `stop` `iterate-ast` terminates the iteration over the AST.
+  Additionally `iterate-ast` terminates the iteration if `(clojure.zip/end?
+  l*)` is `true`.
+
+  After terminating the iteration `iterate-ast` returns a 2-tuple `[a** t]`.
+  `a**` is the final accumulator as returned by the last application of `f`. `t`
+  is the new AST as returned obtained from the location returned by the final
+  application of `f`.
+
+  *Parameters*:
+
+  - `f` the function to repeatedly apply.
+  - `acc` the initial accumulator value, or `nil` if no accumulation is desired.
+  - `stop` value to signal the stop of the iteration. Defaults to `:end`."
+  [f acc ast & [stop]]
+  (letfn [(assert-loc-not-nil
+            [loc]
+            (assert (not (nil? loc))
+                    "The location returned by f must not be nil!"))
+          (not-reached-end
+            [[_ loc end]]
+            (assert-loc-not-nil loc)
+            (and (not (zip/end? loc))
+                 (not= (or stop :end) end)))
+          (zip-up
+            [[a loc _]]
+            (assert-loc-not-nil loc)
+            [a (zip/root loc)])]
+    (->> [acc (zip ast)]
+      (iterate f)
+      (drop-while not-reached-end)
+      (first)
+      (zip-up))))
+
 (defn rule?
   "Check if the current location within represents a rule of the grammar that
   led to the AST.
@@ -98,7 +143,7 @@
 
   - `ast` the abstract syntax tree to convert to a string.
   - `formatters` (optional) map of formatters to use for rules whose canonical
-    string representation is not desired."
+  string representation is not desired."
   [ast & [formatters]]
   (letfn [(apply-formatter [loc]
             (if (rule? loc)
@@ -109,9 +154,7 @@
               (token-to-str loc)))
           (build-strs [[ss loc]]
             [(conj ss (apply-formatter loc)) (zip/next loc)])]
-    (->> [[] (zip ast)]
-      (iterate build-strs)
-      (drop-while (fn [[_ l]] (not (zip/end? l))))
-      (ffirst)
+    (->> (iterate-ast build-strs [] ast)
+      (first)
       (filter (complement nil?))
       (clojure.string/join " "))))
