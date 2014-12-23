@@ -31,9 +31,28 @@
   [dialect tree]
   (ast/ast-to-str tree (::replacements dialect)))
 
+(defn statements-loc
+  "Get the path where the dialect expects its statement resources.
+
+  *Parameters*:
+
+  - `dialect` the SQL dialect to use"
+  [dialect]
+  (str (::resource-path dialect) "/statements/"))
+
 (defn load-statement
+  "Load a SQL statement from a resource.
+
+  The `stmt-path` is interpreted as a sub-path of the dialect's
+  [[statements-loc]]. Returns the statement as a string or `nil` if
+  no statement could be found.
+
+  *Parameters*:
+
+  - `dialect` the SQL dialect to use
+  - `stmt-path` sub-path of the dialects [[statements-loc]]"
   [dialect stmt-path]
-  (let [p (str (::resource-path dialect) "/statements/" stmt-path)
+  (let [p (str (statements-loc dialect) stmt-path)
         r (io/resource p)]
     (if r
       (slurp r)
