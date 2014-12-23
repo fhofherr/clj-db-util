@@ -1,1 +1,1 @@
-select 1 as result from public.dual;
+SELECT 1 AS result FROM public.dual;

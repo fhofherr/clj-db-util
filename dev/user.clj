@@ -1,7 +1,7 @@
 (ns user
   (:require [clojure.test :as t]
             [clojure.tools.namespace.repl :refer  (refresh refresh-all)]
-            [clojure.repl :refer  [doc find-doc source]]
+            [clojure.repl :refer  :all]
             [clojure.java.javadoc :refer  [javadoc]]))
 
 (defn- do-test

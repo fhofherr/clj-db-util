@@ -1,5 +1,6 @@
 (ns fhofherr.clj-db-util.dialect.h2-test
   (:require [clojure.test :refer :all]
+            [fhofherr.clj-db-util.dialect :as d]
             [fhofherr.clj-db-util.dialect.h2 :as h2]))
 
 (deftest parse-boolean
@@ -146,3 +147,14 @@
           [:EQ]
           [:NAMED-PARAM "number"]])
       (h2/h2-parser "select * from dual where 1 = :number" :start :SELECT-STMT)))
+
+(defn- load-and-trim
+  [dialect stmt-path]
+  (-> (d/load-statement d/h2 "simple-select-with-schema.sql")
+      (clojure.string/replace #"\s*;?\s*$" "")))
+
+(deftest parse-and-generate-roundtrips
+  (testing "schema names"
+    (let [sql-str (load-and-trim d/h2 "simple-select-with-schema.sql")
+          tree (d/parse d/h2 sql-str)]
+      (is (= sql-str (d/ast-to-str d/h2 tree))))))

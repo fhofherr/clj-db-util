@@ -71,8 +71,15 @@
   - `loc` a location within the AST.
   "
   [loc]
-  (and (zip/branch? loc)
-       (keyword? (first (zip/children loc)))))
+  (boolean (and loc
+                ;; clojure.zip uses meta information associated with loc.
+                ;; If we reach the end of a depth first traversal loc does
+                ;; not have any meta information associated with it. Calling
+                ;; zip/branch? with the special end location will lead to a
+                ;; NullPointerException.
+                (not (zip/end? loc))
+                (zip/branch? loc)
+                (keyword? (first (zip/children loc))))))
 
 (defn get-rule
   "Obtain the name of the rule that lead to the branch of the AST at the
@@ -90,6 +97,40 @@
   [loc]
   (when (rule? loc)
     (first (zip/children loc))))
+
+(defn rule=
+  "Check if the location `loc` in the AST is a rule with name `rule-name`.
+
+  Returns `true` if the rule names are equal, or `false` if the rule names
+  don't match, `loc` is not a rule, or `loc` is `nil`.
+
+  *Parameters*:
+
+  - `rule-name` the expected rule name
+  - `loc` a location within the AST."
+  [rule-name loc]
+  (if (rule? loc)
+    (= rule-name (get-rule loc))
+    false))
+
+(defn find-rule
+  "Find the location of the rule `rule-name` within the subtree represented
+  by `loc`.
+
+  Return the location or `nil` if no such location could be found.
+
+  *Parameters*:
+
+  - `rule-name` name of the rule to look for
+  - `loc` the location from which to begin with the search"
+  [rule-name loc]
+  (let [l (->> loc
+               (iterate zip/next)
+               (drop-while #(and (not (rule= rule-name %))
+                                 (not (zip/end? %))))
+               (first))]
+    (when (rule= rule-name l)
+      l)))
 
 (defn token?
   "Check if the current location within the AST is a token.
@@ -120,24 +161,32 @@
            (not (keyword? (zip/node loc))))))
 
 (defn token-to-str
-  "If the location of the AST is a [[token?]] return the token's string
-  representation. Return `nil` if the location does not represent a [[token?]].
+  "If the location `loc` of the AST is a [[token?]] return the token's string
+  representation and `(clojure.zip/next loc)`. Return `[nil (clojure.zip/next
+  loc)]` if `loc`  does not represent a [[token?]].
 
    *Parameters*:
 
   - `loc` a location within the AST."
   [loc]
-  (when (token? loc)
+  (if (token? loc)
     (if (rule? loc)
       (let [rule (get-rule loc)]
-        (name rule))
-      (str (zip/node loc)))))
+        [(name rule) (zip/next loc)])
+      [(str (zip/node loc)) (zip/next loc)])
+    [nil (zip/next loc)]))
 
 (defn ast-to-str
   "Convert the given `ast` to as string using the given `formatters` for
-  tokens whose canonical string representation is not desired. The values
-  in `formatters` may either be strings or functions of one argument (a
-  location within the ast) returning a string.
+  tokens whose canonical string representation is not desired.
+
+  The values in `formatters` may either be strings or functions of one argument
+  (a location within the ast) returning a string and the next location within
+  the ast to process. This allows to ignore subtrees that have already been
+  consumed by the current formatter. If the formatter is a string `ast-to-str`
+  uses `clojure.zip/next` to go to the next location in the AST. A formatter may
+  return `nil` for the next location. In this case the creation of the string
+  is stoped, and the string created so far is returned.
 
   *Parameters*:
 
@@ -145,16 +194,20 @@
   - `formatters` (optional) map of formatters to use for rules whose canonical
   string representation is not desired."
   [ast & [formatters]]
-  (letfn [(apply-formatter [loc]
+  (letfn [(add-str
+            [ss [s l] cl]
+            (if l
+              [(conj ss s) l]
+              [(conj ss s) cl :end]))
+          (apply-formatter
+            [[ss loc]]
             (if (rule? loc)
               (let [fmt (get formatters (get-rule loc) token-to-str)]
                 (if (string? fmt)
-                  fmt
-                  (fmt loc)))
-              (token-to-str loc)))
-          (build-strs [[ss loc]]
-            [(conj ss (apply-formatter loc)) (zip/next loc)])]
-    (->> (iterate-ast build-strs [] ast)
+                  (add-str ss [fmt (zip/next loc)] loc)
+                  (add-str ss (fmt loc) loc)))
+              (add-str ss (token-to-str loc) loc)))]
+    (->> (iterate-ast apply-formatter [] ast)
       (first)
       (filter (complement nil?))
       (clojure.string/join " "))))

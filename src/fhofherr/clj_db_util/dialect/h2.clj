@@ -1,10 +1,20 @@
 (ns fhofherr.clj-db-util.dialect.h2
   (:require [clojure.java.io :refer [resource]]
-            [instaparse.core :as insta]))
+            [clojure.zip :as zip]
+            [instaparse.core :as insta]
+            [fhofherr.clj-db-util.dialect.ast :as ast]))
 
 (def h2-parser (-> "fhofherr/clj-db-util/grammars/h2.bnf"
                    (resource)
                    (insta/parser)))
+
+(defn- fmt-table-expr
+  [loc]
+  (if-let [schema-name-loc (ast/find-rule :SCHEMA-NAME loc)]
+    (let [[_ schema] (zip/node schema-name-loc)
+          [_ table] (zip/node (ast/find-rule :TABLE-NAME loc))]
+      [(str schema "." table) (zip/right loc)])
+    [nil (zip/next loc)]))
 
 (def replacements {:CONCAT "||"
                    :EQ "="
@@ -14,6 +24,8 @@
                    :LT "<"
                    :NEQ "<>"
                    :PARAM "?"
+
+                   :TABLE-EXPR fmt-table-expr
 
                    :DISTINCT-FROM "DISTINCT FROM"
                    :NEXT-VALUE-FOR "NEXT VALUE FOR"
