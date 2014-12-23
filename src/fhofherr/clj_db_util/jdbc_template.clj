@@ -20,3 +20,15 @@
                     (into [stmt] argv)
                     :result-set-fn result-set-fn))
       (log/error "Query was empty!"))))
+
+(defn query-res
+  [dialect db-spec stmt-path & {:keys [params
+                                       result-set-fn]
+                                :or {:params {}
+                                     :result-set-fn identity}}]
+  (let [sql-str (d/load-statement dialect stmt-path)]
+    (query-str dialect
+               db-spec
+               sql-str
+               :params params
+               :result-set-fn result-set-fn)))

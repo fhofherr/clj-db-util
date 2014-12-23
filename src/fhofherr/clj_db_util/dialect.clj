@@ -1,11 +1,13 @@
 (ns fhofherr.clj-db-util.dialect
   (:refer-clojure :exclude [name])
-  (:require [clojure.tools.logging :as log]
+  (:require [clojure.java.io :as io]
+            [clojure.tools.logging :as log]
             [instaparse.core :as insta]
             [fhofherr.clj-db-util.dialect [h2 :as h2-dialect]
                                           [ast :as ast]]))
 
 (def h2 {::name :h2
+         ::resource-path "db/h2"
          ::parser h2-dialect/h2-parser
          ::replacements h2-dialect/replacements})
 
@@ -28,3 +30,11 @@
 (defn ast-to-str
   [dialect tree]
   (ast/ast-to-str tree (::replacements dialect)))
+
+(defn load-statement
+  [dialect stmt-path]
+  (let [p (str (::resource-path dialect) "/statements/" stmt-path)
+        r (io/resource p)]
+    (if r
+      (slurp r)
+      (log/fatalf "Could not load statement '%s'" p))))

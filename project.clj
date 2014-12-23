@@ -10,6 +10,7 @@
                  [org.clojure/tools.logging "0.3.1"]
                  [instaparse "1.3.5"]]
   :profiles  {:dev  {:source-paths ["dev"]
+                     :resource-paths ["test-resources"]
                      :plugins [[codox "0.8.10"]]
                      :codox {:output-dir "target/codox"
                              :defaults {:doc/format :markdown}}

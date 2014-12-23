@@ -5,7 +5,7 @@
  * http://www.h2database.com/html/grammar.html
  *)
 
-S ::= DML;
+S ::= DML <#"\s*;\s*">?;
 
 DML ::= SELECT-STMT;
 

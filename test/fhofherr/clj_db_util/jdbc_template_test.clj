@@ -43,3 +43,12 @@
                             :params {:number 1
                                      :another-number 2}
                             :result-set-fn first)))))))
+
+(deftest query-res
+
+  (testing "simple select"
+    (is (= {:result 1}
+           (t/query-res h2
+                        (test-db/h2-private-in-memory)
+                        "simple-select.sql"
+                        :result-set-fn first)))))
