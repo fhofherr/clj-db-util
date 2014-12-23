@@ -80,30 +80,35 @@
 
    *Parameters*:
 
-  - `loc` a location within the AST.
-  - `replacements` (optional) map of replacement values for rule names if the
-    default string representation of the rule name is not desired."
-  [loc & [replacements]]
-  {:pre [(or (nil? replacements) (map? replacements))]}
+  - `loc` a location within the AST."
+  [loc]
   (when (token? loc)
     (if (rule? loc)
-      (let [rs (or replacements {})
-            rule (get-rule loc)]
-        (get rs rule (name rule)))
+      (let [rule (get-rule loc)]
+        (name rule))
       (str (zip/node loc)))))
 
 (defn ast-to-str
-  "Convert the given `ast` to as string using the given `replacements` for
-  tokens whose canonical string representation is not desired.
+  "Convert the given `ast` to as string using the given `formatters` for
+  tokens whose canonical string representation is not desired. The values
+  in `formatters` may either be strings or functions of one argument (a
+  location within the ast) returning a string.
 
   *Parameters*:
 
   - `ast` the abstract syntax tree to convert to a string.
-  - `replacements` (optional) map of replacement values for rule names if the
-    default string representation of the rule name is not desired."
-  [ast & [replacements]]
-  (letfn [(build-strs [[ss loc]]
-            [(conj ss (token-to-str loc replacements)) (zip/next loc)])]
+  - `formatters` (optional) map of formatters to use for rules whose canonical
+    string representation is not desired."
+  [ast & [formatters]]
+  (letfn [(apply-formatter [loc]
+            (if (rule? loc)
+              (let [fmt (get formatters (get-rule loc) token-to-str)]
+                (if (string? fmt)
+                  fmt
+                  (fmt loc)))
+              (token-to-str loc)))
+          (build-strs [[ss loc]]
+            [(conj ss (apply-formatter loc)) (zip/next loc)])]
     (->> [[] (zip ast)]
       (iterate build-strs)
       (drop-while (fn [[_ l]] (not (zip/end? l))))

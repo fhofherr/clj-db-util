@@ -22,8 +22,6 @@
   (is (= "RULE-NAME" (ast/token-to-str (ast/zip [:RULE-NAME]))))
   (is (= "VALUE"
          (ast/token-to-str (zip/next (zip/next (ast/zip [:RULE "VALUE"]))))))
-  (is (= "REPLACEMENT" (ast/token-to-str (ast/zip [:RULE-NAME])
-                                         {:RULE-NAME "REPLACEMENT"})))
   (is (nil? (ast/token-to-str (zip/next (ast/zip [:RULE "VALUE"])))))
   (is (nil? (ast/token-to-str (ast/zip ["_NAME"]))))
   (is (nil? (ast/token-to-str (ast/zip [:RULE "VALUE"])))))
@@ -40,6 +38,6 @@
                [:INTEGRAL-NUMBER "1"]
                [:EQ]
                [:PARAM]]]]
-        replacements {:PARAM "?" :EQ "="}]
+        formatters {:PARAM "?" :EQ "="}]
     (is (= "SELECT * FROM dual WHERE 1 = ?"
-           (ast/ast-to-str ast replacements)))))
+           (ast/ast-to-str ast formatters)))))
