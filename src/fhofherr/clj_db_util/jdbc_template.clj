@@ -36,3 +36,25 @@
                sql-str
                :params params
                :result-set-fn result-set-fn)))
+
+(defn insert!
+  "Wrapper around `clojure.java.jdbc/insert!`.
+
+  Delegates to `clojure.java.jdbc/insert!` internally and supports everything
+  `clojure.java.jdbc/insert!` does:
+
+  - Insertion of single rows
+  - Insertion of multiple rows using multiple inserts
+  - Insertion of multiple rows using a single insert
+
+  **Unified extraction of generated keys**
+
+  If the SQL dialect supports it and either a single row or multiple rows using
+  multiple inserts were inserted a sequence of generated keys will be returned.
+  If multiple rows are inserted using a single insert the total number of rows
+  inserted will be returned."
+  [dialect db-spec table & options]
+  (let [xs (apply jdbc/insert! db-spec table options)]
+    (if (map? (first options)) ;; Check if we are inserting row maps
+      (d/get-generated-keys dialect xs)
+      (count xs))))

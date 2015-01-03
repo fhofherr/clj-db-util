@@ -8,6 +8,10 @@
                    (resource)
                    (insta/parser)))
 
+(defn get-generated-key
+  [m]
+  (get m (keyword "scope_identity()")))
+
 (defn- fmt-table-expr
   [loc]
   (if-let [schema-name-loc (ast/find-rule :SCHEMA-NAME loc)]

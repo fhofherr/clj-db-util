@@ -9,7 +9,8 @@
 (def h2 {::name :h2
          ::resource-path "db/h2"
          ::parser h2-dialect/h2-parser
-         ::replacements h2-dialect/replacements})
+         ::replacements h2-dialect/replacements
+         ::gen-key-extractor h2-dialect/get-generated-key})
 
 (defn parse
   "Use the `dialect`'s parser to parse the `sql-str`.
@@ -71,3 +72,9 @@
     (if r
       (slurp r)
       (log/fatalf "Could not load statement '%s'" p))))
+
+(defn get-generated-keys
+  "Given a sequence `ms` of maps try to extract the generated keys
+  using the `dialect`'s generated key extractor."
+  [dialect ms]
+  (map (::gen-key-extractor dialect) ms))

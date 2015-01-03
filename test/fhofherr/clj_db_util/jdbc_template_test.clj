@@ -4,13 +4,15 @@
             [fhofherr.clj-db-util.jdbc-template :as t]
             [fhofherr.clj-db-util.dialect :refer [h2]]))
 
+(use-fixtures :each (test-db/prepare-db h2 test-db/h2-in-memory))
+
 (deftest query-str
 
   (testing "syntax errors"
 
     (let [stmt "Not SQL in any dialect."]
-      (is (nil? (t/query-str h2
-                             (test-db/h2-private-in-memory)
+      (is (nil? (t/query-str test-db/*dialect*
+                             test-db/*db-spec*
                              stmt)))))
 
   (testing "named-parameters"
@@ -18,14 +20,14 @@
     (testing "simple statements"
       (let [stmt "SELECT 1 AS result FROM dual WHERE 1 = :number"]
         (is (= {:result 1}
-               (t/query-str h2
-                            (test-db/h2-private-in-memory)
+               (t/query-str test-db/*dialect*
+                            test-db/*db-spec*
                             stmt
                             :params {:number 1}
                             :result-set-fn first)))
         (is (nil?
-              (t/query-str h2
-                           (test-db/h2-private-in-memory)
+              (t/query-str test-db/*dialect*
+                           test-db/*db-spec*
                            stmt
                            :params {:number 2}
                            :result-set-fn first)))))
@@ -37,8 +39,8 @@
                  WHERE 1 = :number
                  AND EXISTS (SELECT 1 FROM DUAL WHERE 2 = :another-number)"]
         (is (= {:result 1}
-               (t/query-str h2
-                            (test-db/h2-private-in-memory)
+               (t/query-str test-db/*dialect*
+                            test-db/*db-spec*
                             stmt
                             :params {:number 1
                                      :another-number 2}
@@ -47,8 +49,8 @@
   (testing "template vars"
     (let [stmt "SELECT 1 AS result FROM {{ schema }}.dual"]
       (is (= {:result 1}
-             (t/query-str h2
-                          (test-db/h2-private-in-memory)
+             (t/query-str test-db/*dialect*
+                          test-db/*db-spec*
                           stmt
                           :template-vars {:schema "PUBLIC"}
                           :result-set-fn first))))))
@@ -57,7 +59,40 @@
 
   (testing "simple select"
     (is (= {:result 1}
-           (t/query-res h2
-                        (test-db/h2-private-in-memory)
+           (t/query-res test-db/*dialect*
+                        test-db/*db-spec*
                         "simple-select.sql"
                         :result-set-fn first)))))
+
+(deftest insert!
+
+  (testing "insert single row"
+    (is (= [1]
+           (t/insert! test-db/*dialect*
+                      test-db/*db-spec*
+                      :fruit
+                      {:name "Apple" :cost 2.99}))))
+
+  (testing "insert multiple rows"
+    (is (= [2 3]
+           (t/insert! test-db/*dialect*
+                      test-db/*db-spec*
+                      :fruit
+                      {:name "Banana" :cost 1.85}
+                      {:name "Pineapple" :cost 4.88}))))
+
+  (testing "batch insert multiple rows"
+    (is (= 2
+           (t/insert! test-db/*dialect*
+                      test-db/*db-spec*
+                      :fruit
+                      nil
+                      [10 "Grapefruit" 0.76]
+                      [11 "Peach" 1.56])))
+    (is (= 2
+           (t/insert! test-db/*dialect*
+                      test-db/*db-spec*
+                      :fruit
+                      [:name :cost]
+                      ["Strawberry" 1.79]
+                      ["Raspberry" 0.56])))))
