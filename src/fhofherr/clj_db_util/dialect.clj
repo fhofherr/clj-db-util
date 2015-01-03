@@ -53,7 +53,7 @@
   ([dialect schema]
    (if schema
      (format "%s/migrations/%s/" (::resource-path dialect) schema)
-     (format "%s/migrations/" (::resource-path dialect)))))
+     (format "%s/migrations/default/" (::resource-path dialect)))))
 
 (defn load-statement
   "Load a SQL statement from a resource.
