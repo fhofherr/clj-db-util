@@ -40,6 +40,20 @@
   [dialect]
   (str (::resource-path dialect) "/statements/"))
 
+(defn migrations-loc
+  "Get the path where the dialect expects its migration resources.
+
+  *Parameters*:
+
+  - `dialect` the SQL dialect to use
+  - `schema` (optional) if migrations for a database are seperated by schema."
+  ([dialect]
+   (migrations-loc dialect nil))
+  ([dialect schema]
+   (if schema
+     (format "%s/migrations/%s/" (::resource-path dialect) schema)
+     (format "%s/migrations/" (::resource-path dialect)))))
+
 (defn load-statement
   "Load a SQL statement from a resource.
 

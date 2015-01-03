@@ -8,6 +8,7 @@
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [org.clojure/java.jdbc "0.3.6"]
                  [org.clojure/tools.logging "0.3.1"]
+                 [org.flywaydb/flyway-core "3.1"]
                  [instaparse "1.3.5"]]
   :profiles  {:dev  {:source-paths ["dev"]
                      :resource-paths ["test-resources"]
