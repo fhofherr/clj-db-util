@@ -17,4 +17,6 @@
                              :exclude [user]
                              :defaults {:doc/format :markdown}}
                      :dependencies [[org.clojure/tools.namespace "0.2.8"]
-                                    [com.h2database/h2 "1.4.184"]]}})
+                                    [com.h2database/h2 "1.4.184"]
+                                    [org.slf4j/slf4j-api "1.7.9"]
+                                    [org.slf4j/slf4j-nop "1.7.9"]]}})
