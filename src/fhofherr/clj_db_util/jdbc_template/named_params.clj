@@ -72,3 +72,20 @@
   - `m` a map mapping the parameter names to their desired values."
   [ps m]
   (for [p ps] (get m p)))
+
+(defn process-named-params
+  "Process the named paramters within the AST `tree` and use the context `ctx`
+  to resolve their respective values.
+
+  Return a two-tuple `[argv tree]` where `argv` is an argument vector siutable
+  for the respective `clojure.java.jdbc` functions. `tree` is the modified AST
+  with all named parameters replaced by positional parameters.
+
+  *Parameters*:
+
+  - `ctx` context used to resolve the values of the named parameters.
+  - `tree` AST to modify"
+  [ctx tree]
+  (let [[ps tree*] (extract-named-params tree)
+        argv (make-argv ps ctx)]
+    [argv tree*]))

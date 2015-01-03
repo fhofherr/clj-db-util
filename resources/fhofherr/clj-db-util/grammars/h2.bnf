@@ -24,7 +24,7 @@ COLUMN-ALIAS ::= ALIAS;
 
 COLUMN-NAME ::= NAME;
 
-SCHEMA-NAME ::= NAME;
+SCHEMA-NAME ::= NAME | TEMPLATE-VAR;
 
 TABLE-NAME ::= NAME;
 
@@ -189,3 +189,9 @@ WHERE          ::= <#'(?i)\s*where\s*'>;
 
 PARAM ::= <"?">
 NAMED-PARAM ::= <":"> #"(?i)[A-Z_][A-Z0-9_-]*";
+
+(* Extendsion: template variables *)
+
+TEMPLATE-VAR ::= #"\{\{\s*" TEMPLATE-VAR-NAME #"\s*\}\}" |
+                 #"\$\{\s*" TEMPLATE-VAR-NAME #"\s*\}"
+TEMPLATE-VAR-NAME ::= #"(?i)[A-Z_][A-Z0-9_]*"

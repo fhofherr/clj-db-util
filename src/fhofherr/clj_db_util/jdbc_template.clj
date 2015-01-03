@@ -2,16 +2,20 @@
   (:require [clojure.tools.logging :as log]
             [clojure.java.jdbc :as jdbc]
             [fhofherr.clj-db-util.dialect :as d]
-            [fhofherr.clj-db-util.jdbc-template.named-params :as np]))
+            [fhofherr.clj-db-util.jdbc-template [template-vars :as tv]
+                                                [named-params :as np]]))
 
 (defn query-str
   [dialect db-spec sql-str & {:keys [params
+                                     template-vars
                                      result-set-fn]
                               :or {:params {}
+                                   :template-vars {}
                                    :result-set-fn identity}}]
-  (let [[ps tree] (-> (d/parse dialect sql-str)
-                      (np/extract-named-params))
-        argv (np/make-argv ps params)
+  (let [[argv tree] (->> sql-str
+                         (d/parse dialect)
+                         (tv/process-template-vars dialect template-vars)
+                         (np/process-named-params params))
         stmt (d/ast-to-str dialect tree)]
     (if (not-empty stmt)
       (do

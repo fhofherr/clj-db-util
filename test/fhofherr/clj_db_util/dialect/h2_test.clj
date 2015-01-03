@@ -106,6 +106,12 @@
   (is (= [:ARRAY [:INTEGRAL-NUMBER "1"] [:INTEGRAL-NUMBER "2"]]
          (h2/h2-parser "(1, 2,)" :start :ARRAY))))
 
+(deftest parse-template-var
+  (is (= [:TEMPLATE-VAR "{{ " [:TEMPLATE-VAR-NAME "name"] " }}"]
+         (h2/h2-parser "{{ name }}" :start :TEMPLATE-VAR)))
+  (is (= [:TEMPLATE-VAR "${ " [:TEMPLATE-VAR-NAME "name"] " }"]
+         (h2/h2-parser "${ name }" :start :TEMPLATE-VAR))))
+
 (deftest parse-select
   (is (= [:SELECT-STMT
           [:SELECT]
@@ -150,10 +156,11 @@
 
 (defn- load-and-trim
   [dialect stmt-path]
-  (-> (d/load-statement d/h2 "simple-select-with-schema.sql")
+  (-> (d/load-statement d/h2 stmt-path)
       (clojure.string/replace #"\s*;?\s*$" "")))
 
 (deftest parse-and-generate-roundtrips
+
   (testing "schema names"
     (let [sql-str (load-and-trim d/h2 "simple-select-with-schema.sql")
           tree (d/parse d/h2 sql-str)]

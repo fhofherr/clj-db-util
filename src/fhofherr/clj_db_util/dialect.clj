@@ -21,8 +21,8 @@
 
   - `dialect` the SQL dialect to use
   - `sql-str` the SQL string to parse."
-  [dialect sql-str]
-  (let [ast ((::parser dialect) sql-str)]
+  [dialect sql-str & insta-opts]
+  (let [ast (apply (::parser dialect) sql-str insta-opts)]
     (if (insta/failure? ast)
       (log/fatal (insta/get-failure ast))
       ast)))
