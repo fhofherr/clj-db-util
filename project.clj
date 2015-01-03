@@ -13,6 +13,7 @@
                      :resource-paths ["test-resources"]
                      :plugins [[codox "0.8.10"]]
                      :codox {:output-dir "target/codox"
+                             :exclude [user]
                              :defaults {:doc/format :markdown}}
                      :dependencies [[org.clojure/tools.namespace "0.2.8"]
                                     [com.h2database/h2 "1.4.184"]]}})
