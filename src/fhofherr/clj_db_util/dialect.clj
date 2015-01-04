@@ -12,6 +12,10 @@
          ::replacements h2-dialect/replacements
          ::gen-key-extractor h2-dialect/get-generated-key})
 
+(defn set-resource-path
+  [dialect resource-path]
+  (assoc dialect ::resource-path resource-path))
+
 (defn parse
   "Use the `dialect`'s parser to parse the `sql-str`.
 
