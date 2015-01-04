@@ -3,7 +3,8 @@
             [clojure.tools.logging :as log]
             [fhofherr.clj-db-util.dialect :as d]
             )
-  (:import [org.flywaydb.core Flyway]))
+  (:import [org.flywaydb.core Flyway]
+           [org.flywaydb.core.api.callback FlywayCallback]))
 
 (defn- set-datasource
   [flyway datasource url user password]
@@ -47,6 +48,62 @@
     )
   flyway)
 
+(defn- mk-flyway-callback
+  [callbacks]
+  (letfn [(combine [cbs]
+            {:pre [(every? fn? cbs)]}
+            (fn [con & args] (doseq [cb cbs] (apply cb con args))))
+
+          (execute [cb-key con & args]
+            (when-let [cb (get callbacks cb-key)]
+              (cond
+                (fn? cb) (apply cb con args)
+                (sequential? cb) (apply (combine cb) con args)
+                :else (throw (IllegalArgumentException.
+                               "Required a function or collection of functions")))))]
+    (reify FlywayCallback
+      (afterBaseline [this con]
+        (execute :after-baseline con))
+      (afterClean [this con]
+        (execute :after-clean con))
+      (afterEachMigrate [this con mig-info]
+        (execute :after-clean con mig-info))
+      (afterInfo [this con]
+        (execute :after-info con))
+      (afterInit [this con]
+        (execute :after-init con))
+      (afterMigrate [this con]
+        (execute :after-migrate con))
+      (afterRepair [this con]
+        (execute :after-repair con))
+      (afterValidate [this con]
+        (execute :after-validate con))
+      (beforeBaseline [this con]
+        (execute :after-baseline con))
+      (beforeClean [this con]
+        (execute :before-clean con))
+      (beforeEachMigrate [this con mig-info]
+        (execute :before-each-migrate con mig-info))
+      (beforeInfo [this con]
+        (execute :before-info con))
+      (beforeInit [this con]
+        (execute :before-init con))
+      (beforeMigrate [this con]
+        (execute :before-migrate con))
+      (beforeRepair [this con]
+        (execute :before-repair con))
+      (beforeValidate [this con]
+        (execute :before-validate con)))))
+
+(defn- set-callbacks
+  [flyway {callbacks :callbacks}]
+  {:pre [(or (nil? callbacks) (map? callbacks) (sequential? callbacks))]}
+  (when callbacks
+    (let [cbs (if (map? callbacks) [callbacks] callbacks)
+          cb-array (into-array FlywayCallback (map mk-flyway-callback cbs))]
+      (.setCallbacks flyway cb-array)))
+  flyway)
+
 (defn create-flyway
   "Create a new flyway instance for the given `dialect`. The database connection
   used by the returned flyway instance may be specified by passing a map
@@ -57,11 +114,13 @@
   - `dialect` the dialect to use
   - a map containing either a datasource or connection information"
   [dialect {:keys [datasource url user password]} {:keys [schema
-                                                          placeholders]}]
+                                                          placeholders]
+                                                   :as options}]
   (some-> (Flyway.)
     (set-datasource datasource url user password)
     (set-schema schema)
     (set-placeholders placeholders schema)
+    (set-callbacks options)
     (set-migrations-loc (d/migrations-loc dialect schema))))
 
 (defn migrate

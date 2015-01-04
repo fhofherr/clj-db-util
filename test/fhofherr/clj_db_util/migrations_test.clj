@@ -2,7 +2,9 @@
   (:require [clojure.test :refer :all]
             [fhofherr.clj-db-util.support.test-db :as test-db]
             [fhofherr.clj-db-util.jdbc-template :as t]
-            [fhofherr.clj-db-util.dialect :refer [h2]]))
+            [fhofherr.clj-db-util.dialect :refer [h2]]
+            [fhofherr.clj-db-util.migrations :as migs]
+            ))
 
 (def placeholder-value "THE VALUE")
 
@@ -28,3 +30,52 @@
                        WHERE placeholder_value = :value"
                       :params {:value placeholder-value}
                       :result-set-fn first))))
+
+
+(deftest executes-callbacks
+  (let [callbacks (atom [])]
+    (letfn [(reset-callbacks [] (reset! callbacks []))
+            (after-migrate [con] (swap! callbacks conj :after-migrate ))
+            (before-migrate [con] (swap! callbacks conj :before-migrate ))
+            (after-clean [con] (swap! callbacks conj :after-clean ))
+            (before-clean [con] (swap! callbacks conj :before-clean ))]
+
+      (testing "migration callbacks"
+
+        (do (reset-callbacks)
+            (migs/migrate test-db/*dialect*
+                          test-db/*db-spec*
+                          :callbacks [{:before-migrate [before-migrate]}
+                                      {:after-migrate [after-migrate]}])
+            (is (= [:before-migrate :after-migrate] @callbacks)))
+
+        (do (reset-callbacks)
+            (migs/migrate test-db/*dialect*
+                          test-db/*db-spec*
+                          :callbacks [{:before-migrate [before-migrate]
+                                       :after-migrate [after-migrate]}])
+            (is (= [:before-migrate :after-migrate] @callbacks)))
+
+        (do (reset-callbacks)
+            (migs/migrate test-db/*dialect*
+                          test-db/*db-spec*
+                          :callbacks {:before-migrate [before-migrate]
+                                      :after-migrate [after-migrate]})
+            (is (= [:before-migrate :after-migrate] @callbacks)))
+
+        (do (reset-callbacks)
+            (migs/migrate test-db/*dialect*
+                          test-db/*db-spec*
+                          :callbacks {:before-migrate before-migrate
+                                      :after-migrate after-migrate})
+            (is (= [:before-migrate :after-migrate] @callbacks)))
+        )
+
+      (testing "clean callbacks"
+
+        (do (reset-callbacks)
+            (migs/clean test-db/*dialect*
+                        test-db/*db-spec*
+                        :callbacks [{:before-clean [before-clean]}
+                                    {:after-clean [after-clean]}])
+            (is (= [:before-clean :after-clean] @callbacks)))))))
