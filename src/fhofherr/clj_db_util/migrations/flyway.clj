@@ -34,6 +34,19 @@
     (.setSchemas flyway (into-array String [schema])))
   flyway)
 
+(defn- set-placeholders
+  [flyway placeholders schema]
+  {:pre [(or (nil? placeholders) (map? placeholders))]}
+  (letfn [(add-schema [m] (if schema
+                            (assoc m "schema" schema)
+                            m))
+          (convert-entries [[k v]] [(name k) (str v)])]
+    (.setPlaceholders flyway (as-> {} $
+                                 (add-schema $)
+                                 (into $ (map convert-entries placeholders))))
+    )
+  flyway)
+
 (defn create-flyway
   "Create a new flyway instance for the given `dialect`. The database connection
   used by the returned flyway instance may be specified by passing a map
@@ -43,10 +56,12 @@
   *Parameters*:
   - `dialect` the dialect to use
   - a map containing either a datasource or connection information"
-  [dialect {:keys [datasource url user password]} {:keys [schema]}]
+  [dialect {:keys [datasource url user password]} {:keys [schema
+                                                          placeholders]}]
   (some-> (Flyway.)
     (set-datasource datasource url user password)
     (set-schema schema)
+    (set-placeholders placeholders schema)
     (set-migrations-loc (d/migrations-loc dialect schema))))
 
 (defn migrate
