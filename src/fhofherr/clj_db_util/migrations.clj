@@ -10,9 +10,9 @@
 
   - `dialect` the dialect to use.
   - `db-spec` the db-spec used to connect to the database."
-  [dialect db-spec]
+  [dialect db-spec & options]
   (log/info "Preparing to migrate database.")
-  (fw/migrate dialect db-spec))
+  (fw/migrate dialect db-spec options))
 
 (defn clean
   "Clean the database identified by`db-spec` while using the dialect `dialect`.
@@ -25,5 +25,5 @@
 
   - `dialect` the dialect to use.
   - `db-spec` the db-spec used to connect to the database."
-  [dialect db-spec]
-  (fw/clean dialect db-spec))
+  [dialect db-spec & options]
+  (fw/clean dialect db-spec options))

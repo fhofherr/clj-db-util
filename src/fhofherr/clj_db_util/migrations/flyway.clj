@@ -20,11 +20,19 @@
 
 (defn- set-migrations-loc
   [flyway migration-loc]
+  {:pre [(string? migration-loc)]}
   (if (resource migration-loc)
     (do 
       (.setLocations flyway (into-array String [migration-loc]))
       flyway)
     (log/fatalf "Migraion loc '%s' is missing!" migration-loc)))
+
+(defn- set-schema
+  [flyway schema]
+  {:pre [(or (nil? schema) (string? schema))]}
+  (when schema
+    (.setSchemas flyway (into-array String [schema])))
+  flyway)
 
 (defn create-flyway
   "Create a new flyway instance for the given `dialect`. The database connection
@@ -35,22 +43,23 @@
   *Parameters*:
   - `dialect` the dialect to use
   - a map containing either a datasource or connection information"
-  [dialect {:keys [datasource url user password]}]
+  [dialect {:keys [datasource url user password]} {:keys [schema]}]
   (some-> (Flyway.)
     (set-datasource datasource url user password)
-    (set-migrations-loc (d/migrations-loc dialect))))
+    (set-schema schema)
+    (set-migrations-loc (d/migrations-loc dialect schema))))
 
 (defn migrate
-  [dialect db-spec]
-  (if-let [fw (create-flyway dialect db-spec)]
+  [dialect db-spec options]
+  (if-let [fw (create-flyway dialect db-spec options)]
     (do
       (.migrate fw)
       db-spec)
     (log/fatalf "Could not create flyway!")))
 
 (defn clean
-  [dialect db-spec]
-  (if-let [fw (create-flyway dialect db-spec)]
+  [dialect db-spec options]
+  (if-let [fw (create-flyway dialect db-spec options)]
     (do
       (.clean fw)
       db-spec)

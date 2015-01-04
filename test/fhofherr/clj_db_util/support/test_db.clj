@@ -7,14 +7,14 @@
 (def ^:dynamic *dialect* nil)
 
 (defn prepare-db
-  [dialect db-spec-factory]
+  [dialect db-spec-factory & options]
   (let [db-spec (db-spec-factory)]
     (fn [f]
-      (binding [*db-spec* (migs/migrate dialect db-spec)
+      (binding [*db-spec* (apply migs/migrate dialect db-spec options)
                 *dialect* dialect]
         (assert *db-spec*)
         (f)
-        (migs/clean dialect db-spec)))))
+        (apply migs/clean dialect db-spec options)))))
 
 (defn h2-in-memory
   []
