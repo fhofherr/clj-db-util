@@ -20,6 +20,11 @@
       [(str schema "." table) (zip/right loc)])
     [nil (zip/next loc)]))
 
+(defn- fmt-string
+  [loc]
+  (let [[_ ldelim s rdelim] (zip/node loc)]
+    [(str ldelim s rdelim) (zip/right loc)]))
+
 (def replacements {:CONCAT "||"
                    :EQ "="
                    :GEQ ">="
@@ -30,6 +35,7 @@
                    :PARAM "?"
 
                    :TABLE-EXPR fmt-table-expr
+                   :STRING fmt-string
 
                    :DISTINCT-FROM "DISTINCT FROM"
                    :NEXT-VALUE-FOR "NEXT VALUE FOR"

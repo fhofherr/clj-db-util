@@ -107,7 +107,7 @@ CASE-WHEN-STMT ::= CASE
 
 BOOLEAN ::= TRUE | FALSE
 
-STRING ::= <"\'"> #'([^\']|\'\')+'? <"\'">;
+STRING ::= "'" #'([^\']|\'\')+'? "'"
 
 DOLLAR-QUOTED-STRING ::= <"$$">
                         ("$" |

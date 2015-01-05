@@ -14,9 +14,9 @@
   (is (= [:NULL] (h2/h2-parser "NULL" :start :NULL))))
 
 (deftest parse-string
-  (is (= [:STRING] (h2/h2-parser "''" :start :STRING)))
-  (is (= [:STRING "something"] (h2/h2-parser "'something'" :start :STRING)))
-  (is (= [:STRING "John''s car."] (h2/h2-parser "'John''s car.'" :start :STRING))))
+  (is (= [:STRING "'" "'"] (h2/h2-parser "''" :start :STRING)))
+  (is (= [:STRING "'" "something" "'"] (h2/h2-parser "'something'" :start :STRING)))
+  (is (= [:STRING "'" "John''s car." "'"] (h2/h2-parser "'John''s car.'" :start :STRING))))
 
 (deftest parse-dollar-quoted-string
   (is (= [:DOLLAR-QUOTED-STRING]
