@@ -32,7 +32,39 @@
   `(deftxfn ~(with-meta fn-name (assoc (meta fn-name) :private true))
      ~@body))
 
+(defn- emit-tx-step
+  [[arg tx-expr]]
+  (if tx-expr
+    `(tx-bind (fn [~arg] ~tx-expr))
+    `(tx-bind (fn [~arg] (tx-return ~arg)))))
+
+(defn- emit-tx-steps
+  [bindings]
+  (reduce (fn [a s] (conj a (emit-tx-step s))) [] bindings))
+
+(defmacro tx->
+  [& bindings]
+  (assert (even? (count bindings))
+          "Need an even number of bindings!")
+  (let [args (->> bindings
+               (partition 2)
+               (map first))
+        exprs (->> bindings
+                (partition 2)
+                (map second))
+        first-tx-expr (first exprs)
+        other-tx-exprs (-> exprs
+                           (rest)
+                           (lazy-cat (repeat nil)))
+        reordered-bindings (partition 2 (interleave args other-tx-exprs))]
+    `(-> ~first-tx-expr
+         ~@(emit-tx-steps reordered-bindings))))
+
 (defn tx-exec
   [dialect db-spec tx]
   (jdbc/with-db-transaction [con db-spec]
     (::value ((:op tx) dialect con))))
+
+(defmacro tx-exec->
+  [dialect db-spec & bindings]
+  `(tx-exec ~dialect ~db-spec (tx-> ~@bindings)))

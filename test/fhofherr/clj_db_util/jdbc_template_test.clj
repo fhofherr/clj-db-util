@@ -2,7 +2,7 @@
   (:require [clojure.test :refer :all]
             [fhofherr.clj-db-util.support.test-db :as test-db]
             [fhofherr.clj-db-util.jdbc-template :as t]
-            [fhofherr.clj-db-util.transactions :refer [tx-exec]]
+            [fhofherr.clj-db-util.transactions :refer [tx-exec tx-exec->]]
             [fhofherr.clj-db-util.dialect :refer [h2]]))
 
 (use-fixtures :each (test-db/prepare-db h2 test-db/h2-in-memory))
@@ -30,15 +30,11 @@
                     (t/query-str "SELECT 1 AS one, 2 AS two FROM DUAL"
                                  :result-set-fn first))))
 
-    ;; TODO One transaction!
-    (do (tx-exec test-db/*dialect*
-                 test-db/*db-spec*
-                 (t/insert! :fruit
-                            {:name "Apple" :cost 2.99}))
-        (tx-exec test-db/*dialect*
-                 test-db/*db-spec*
-                 (t/insert! :fruit_orders
-                            {:fruit_id 1 :customer_name "Fruit Sales Inc."}))
+    (do (tx-exec-> test-db/*dialect*
+                   test-db/*db-spec*
+                   _ (t/insert! :fruit {:name "Apple" :cost 2.99})
+                   _ (t/insert! :fruit_orders
+                                {:fruit_id 1 :customer_name "Fruit Sales Inc."}))
         (is (= {:fruit_name "Apple"
                 :customer_name "Fruit Sales Inc."}
                (tx-exec test-db/*dialect*
