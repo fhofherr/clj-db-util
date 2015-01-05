@@ -15,6 +15,19 @@
                              test-db/*db-spec*
                              stmt)))))
 
+  (testing "simple selects"
+    (is (= {:result 1}
+           (t/query-str test-db/*dialect*
+                        test-db/*db-spec*
+                        "SELECT 1 AS result FROM DUAL"
+                        :result-set-fn first)))
+
+    (is (= {:one 1, :two 2}
+           (t/query-str test-db/*dialect*
+                        test-db/*db-spec*
+                        "SELECT 1 AS one, 2 AS two FROM DUAL"
+                        :result-set-fn first))))
+
   (testing "named-parameters"
 
     (testing "simple statements"

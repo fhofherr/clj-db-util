@@ -9,7 +9,7 @@ S ::= DML <#"\s*;\s*">?;
 
 DML ::= SELECT-STMT;
 
-SELECT-STMT ::= SELECT (DISTINCT | ALL)? SELECT-EXPR+
+SELECT-STMT ::= SELECT (DISTINCT | ALL)? SELECT-EXPR (#"\s*,\s*" SELECT-EXPR)*
                 FROM TABLE-EXPR+
                 (WHERE EXPR)?;
 
