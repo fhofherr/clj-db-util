@@ -9,36 +9,6 @@
 (alter-meta! #'->Transaction assoc :no-doc true)
 (alter-meta! #'map->Transaction assoc :no-doc true)
 
-;; Special value to mark a transaction as stopped
-(def ^:private tx-stop {::connection nil ::value nil})
-
-(defn tx-return
-  "Take an arbitrary value `v` and wrap it into a transaction.
-
-  *Parameters*:
-
-  - `v` an arbitrary value to wrap into a transaction."
-  [v]
-  (Transaction. (fn [dialect con] {::connection con ::value v})))
-
-(defn tx-bind
-  "Take a transacton `tx` containting a value `v` and a function `f` of
-  one argument returning another transaction. Apply `f` to `v` and return
-  the resulting transaction.
-
-  *Parameters*:
-
-  - `tx` a transaction.
-  - `f` a function expecting one argument and returning a transaction."
-  [tx f]
-  (Transaction. (fn [dialect con]
-                  {:pre [dialect con]}
-                  (let [{con* ::connection v ::value} ((:op tx) dialect con)
-                        tx* (f v)]
-                    (if con*
-                      ((:op tx*) dialect con*)
-                      tx-stop)))))
-
 (defmacro deftx
   "Define a function that creates a transaction. The first entry of the
   definitions argument vector will be bound to the dialect used during the
@@ -75,12 +45,39 @@
   [dialect con f v & vs]
   (apply f v vs))
 
-(defn tx-rollback
-  "Rollback the transaction. Further steps won't be executed."
-  []
+(deftx tx-return
+  "Take an arbitrary value `v` and wrap it into a transaction.
+
+  *Parameters*:
+
+  - `v` an arbitrary value to wrap into a transaction."
+  [dialect db-spec v]
+  v)
+
+;; Can't use deftx here as we need to return con* for the ::connection.
+;; If we would use deftx con would be returned.
+(defn tx-bind
+  "Take a transacton `tx` containting a value `v` and a function `f` of
+  one argument returning another transaction. Apply `f` to `v` and return
+  the resulting transaction.
+
+  *Parameters*:
+
+  - `tx` a transaction.
+  - `f` a function expecting one argument and returning a transaction."
+  [tx f]
   (Transaction. (fn [dialect con]
-                  (jdbc/db-set-rollback-only! con)
-                  tx-stop)))
+                  {:pre [dialect con]}
+                  (let [{con* ::connection v ::value} ((:op tx) dialect con)
+                        tx* (f v)]
+                    (if-not (jdbc/db-is-rollback-only con*)
+                      ((:op tx*) dialect con*)
+                      {::connection con* ::value nil})))))
+
+(deftx tx-rollback
+  "Rollback the transaction. Further steps won't be executed."
+  [dialect con]
+  (jdbc/db-set-rollback-only! con))
 
 (defn- emit-tx-step
   [[arg tx-expr]]
