@@ -9,6 +9,9 @@
 (alter-meta! #'->Transaction assoc :no-doc true)
 (alter-meta! #'map->Transaction assoc :no-doc true)
 
+;; Special value to mark a transaction as stopped
+(def ^:private tx-stop {::connection nil ::value nil})
+
 (defn tx-return
   "Take an arbitrary value `v` and wrap it into a transaction.
 
@@ -29,11 +32,14 @@
   - `f` a function expecting one argument and returning a transaction."
   [tx f]
   (Transaction. (fn [dialect con]
+                  {:pre [dialect con]}
                   (let [{con* ::connection v ::value} ((:op tx) dialect con)
                         tx* (f v)]
-                    ((:op tx*) dialect con*)))))
+                    (if con*
+                      ((:op tx*) dialect con*)
+                      tx-stop)))))
 
-(defmacro deftxfn
+(defmacro deftx
   "Define a function that creates a transaction. The first entry of the
   definitions argument vector will be bound to the dialect used during the
   execution of the transaction. The second entry of the argument vector
@@ -55,13 +61,26 @@
                        {::connection ~(second args)
                         ::value (do ~@decls)})))))
 
-(defmacro deftxfn-
-  "Same as [[deftxfn]] but yielding a non-public def."
+(defmacro deftx-
+  "Same as [[deftx]] but yielding a non-public def."
   {:arglists '([fn-name [dialect db-spec & args] & body]
                [fn-name doc-string [dialect db-spec & args] & body])}
   [fn-name & body]
-  `(deftxfn ~(with-meta fn-name (assoc (meta fn-name) :private true))
+  `(deftx ~(with-meta fn-name (assoc (meta fn-name) :private true))
      ~@body))
+
+(deftx tx-apply
+  "Take the function `f` and apply it to the values `v` and `vs` within
+  the context of a transaction."
+  [dialect con f v & vs]
+  (apply f v vs))
+
+(defn tx-rollback
+  "Rollback the transaction. Further steps won't be executed."
+  []
+  (Transaction. (fn [dialect con]
+                  (jdbc/db-set-rollback-only! con)
+                  tx-stop)))
 
 (defn- emit-tx-step
   [[arg tx-expr]]

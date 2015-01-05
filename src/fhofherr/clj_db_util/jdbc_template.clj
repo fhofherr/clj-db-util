@@ -6,7 +6,7 @@
             [fhofherr.clj-db-util.jdbc-template [template-vars :as tv]
                                                 [named-params :as np]]))
 
-(tx/deftxfn query-str
+(tx/deftx query-str
   [dialect db-spec sql-str & {:keys [params
                                      template-vars
                                      result-set-fn]
@@ -33,7 +33,7 @@
     (tx/tx-bind (tx/tx-return sql-str)
                 #(apply query-str % options))))
 
-(tx/deftxfn insert!
+(tx/deftx insert!
   "Wrapper around `clojure.java.jdbc/insert!`.
 
   Delegates to `clojure.java.jdbc/insert!` internally and supports everything

@@ -35,6 +35,14 @@
              (tx/tx-exec test-db/*dialect* test-db/*db-spec*
                          (tx/tx-bind tx #(tx/tx-bind (f %) g))))))))
 
+(deftest tx-apply
+  (is (= 70
+         (tx/tx-exec-> test-db/*dialect*
+                       test-db/*db-spec*
+                       x (tx/tx-return 7)
+                       y (tx/tx-apply #(* 10 %) x)
+                       _ (tx/tx-return y)))))
+
 (deftest commit
 
   (do (tx/tx-exec test-db/*dialect* test-db/*db-spec*
@@ -45,3 +53,21 @@
                          (t/query-str "SELECT value
                                       FROM TX_TEST.some_table"
                                       :result-set-fn first))))))
+
+(deftest rollback
+  (do (tx/tx-exec-> test-db/*dialect*
+                    test-db/*db-spec*
+                    _ (t/insert! :TX_TEST.some_table
+                                 {:value "something"})
+                    _ (tx/tx-rollback)
+                    _ (tx/tx-apply #(throw
+                                       (AssertionError.
+                                         (str "You wont see me: " %)))
+                                    nil)
+                    _ (t/insert! :TX_TEST.some_table
+                                 {:value "something else"})))
+
+  (is (empty? (tx/tx-exec test-db/*dialect*
+                          test-db/*db-spec*
+                          (t/query-str "SELECT value
+                                       FROM TX_TEST.some_table")))))
