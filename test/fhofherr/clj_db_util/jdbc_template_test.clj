@@ -15,7 +15,8 @@
                              test-db/*db-spec*
                              stmt)))))
 
-  (testing "simple selects"
+  (testing "simple statements"
+
     (is (= {:result 1}
            (t/query-str test-db/*dialect*
                         test-db/*db-spec*
@@ -26,7 +27,34 @@
            (t/query-str test-db/*dialect*
                         test-db/*db-spec*
                         "SELECT 1 AS one, 2 AS two FROM DUAL"
-                        :result-set-fn first))))
+                        :result-set-fn first)))
+
+    ;; TODO Transactions!
+    (do (t/insert! test-db/*dialect*
+                   test-db/*db-spec*
+                   :fruit
+                   {:name "Apple" :cost 2.99})
+        (t/insert! test-db/*dialect*
+                   test-db/*db-spec*
+                   :fruit_orders
+                   {:fruit_id 1 :customer_name "Fruit Sales Inc."})
+        (is (= {:fruit_name "Apple" :customer_name "Fruit Sales Inc."}
+               (t/query-str test-db/*dialect*
+                            test-db/*db-spec*
+                            "SELECT f.name AS fruit_name, o.customer_name
+                             FROM fruit f
+                             JOIN fruit_orders o ON f.id = o.fruit_id"
+                            :result-set-fn first)))
+
+        (is (= {:fruit_name "Apple" :customer_name "Fruit Sales Inc."}
+               (t/query-str test-db/*dialect*
+                            test-db/*db-spec*
+                            "SELECT f.name AS fruit_name, o.customer_name
+                               FROM fruit f,
+                                    fruit_orders o
+                             WHERE f.id = o.fruit_id"
+                            :result-set-fn first)))
+        ))
 
   (testing "named-parameters"
 
