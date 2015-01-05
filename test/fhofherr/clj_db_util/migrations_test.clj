@@ -4,7 +4,7 @@
             [fhofherr.clj-db-util.jdbc-template :as t]
             [fhofherr.clj-db-util.dialect :refer [h2]]
             [fhofherr.clj-db-util.migrations :as migs]
-            ))
+            [fhofherr.clj-db-util.transactions :refer [tx-exec]]))
 
 (def placeholder-value "THE VALUE")
 
@@ -16,21 +16,20 @@
 
 (deftest schema-support
   (is (= [1]
-         (t/insert! test-db/*dialect*
-                    test-db/*db-spec*
-                    :MIG_TEST.vegetables
-                    {:name "Cucumber"}))))
+         (tx-exec test-db/*dialect*
+                  test-db/*db-spec*
+                  (t/insert! :MIG_TEST.vegetables {:name "Cucumber"})))))
 
 (deftest placeholder-support
   (is (= {:placeholder_value placeholder-value}
-         (t/query-str test-db/*dialect*
-                      test-db/*db-spec*
-                      "SELECT placeholder_value 
-                       FROM MIG_TEST.placeholder_support
-                       WHERE placeholder_value = :value"
-                      :params {:value placeholder-value}
-                      :result-set-fn first))))
-
+         (tx-exec test-db/*dialect*
+                  test-db/*db-spec*
+                  (t/query-str 
+                    "SELECT placeholder_value 
+                    FROM MIG_TEST.placeholder_support
+                    WHERE placeholder_value = :value"
+                    :params {:value placeholder-value}
+                    :result-set-fn first)))))
 
 (deftest executes-callbacks
   (let [callbacks (atom [])]
