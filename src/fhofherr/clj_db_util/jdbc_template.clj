@@ -13,8 +13,7 @@
                         result-set-fn]
                  :or {:params {}
                       :template-vars {}
-                      ;; TODO identity is wrong!
-                      :result-set-fn identity}}]
+                      :result-set-fn doall}}]
   (let [[argv tree] (->> sql-str
                          (d/parse (db-con/dialect db))
                          (tv/process-template-vars (db-con/dialect db) template-vars)
