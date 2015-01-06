@@ -20,7 +20,7 @@
 (deftest placeholder-support
   (is (= {:placeholder_value placeholder-value}
          (tx-exec test-db/*db*
-                  (t/query-str 
+                  (t/query 
                     "SELECT placeholder_value 
                     FROM MIG_TEST.placeholder_support
                     WHERE placeholder_value = :value"

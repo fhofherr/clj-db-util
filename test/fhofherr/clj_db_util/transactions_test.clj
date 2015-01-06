@@ -47,7 +47,7 @@
                              {:value "something"}))
       (is (= {:value "something"}
              (tx/tx-exec test-db/*db*
-                         (t/query-str "SELECT value
+                         (t/query "SELECT value
                                       FROM TX_TEST.some_table"
                                       :result-set-fn first))))))
 
@@ -64,5 +64,5 @@
                                   {:value "something else"})]))
 
   (is (empty? (tx/tx-exec test-db/*db*
-                          (t/query-str "SELECT value
+                          (t/query "SELECT value
                                        FROM TX_TEST.some_table")))))

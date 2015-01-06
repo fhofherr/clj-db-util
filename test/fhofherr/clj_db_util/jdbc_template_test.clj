@@ -7,24 +7,24 @@
 
 (use-fixtures :each (test-db/prepare-db test-db/h2-in-memory))
 
-(deftest query-str
+(deftest query
 
   (testing "syntax errors"
 
     (let [stmt "Not SQL in any dialect."]
       (is (nil? (tx-exec test-db/*db*
-                         (t/query-str stmt))))))
+                         (t/query stmt))))))
 
   (testing "simple statements"
 
     (is (= {:result 1}
            (tx-exec test-db/*db*
-                    (t/query-str "SELECT 1 AS result FROM DUAL"
+                    (t/query "SELECT 1 AS result FROM DUAL"
                                  :result-set-fn first))))
 
     (is (= {:one 1, :two 2}
            (tx-exec test-db/*db*
-                    (t/query-str "SELECT 1 AS one, 2 AS two FROM DUAL"
+                    (t/query "SELECT 1 AS one, 2 AS two FROM DUAL"
                                  :result-set-fn first))))
 
     (do (tx-exec-> test-db/*db*
@@ -35,7 +35,7 @@
         (is (= {:fruit_name "Apple"
                 :customer_name "Fruit Sales Inc."}
                (tx-exec test-db/*db*
-                        (t/query-str
+                        (t/query
                           "SELECT f.name AS fruit_name, o.customer_name
                           FROM fruit f
                           JOIN fruit_orders o ON f.id = o.fruit_id"
@@ -44,7 +44,7 @@
         (is (= {:fruit_name "Apple"
                 :customer_name "Fruit Sales Inc."}
                (tx-exec test-db/*db*
-                        (t/query-str
+                        (t/query
                           "SELECT f.name AS fruit_name, o.customer_name
                           FROM fruit f,
                           fruit_orders o
@@ -57,12 +57,12 @@
       (let [stmt "SELECT 1 AS result FROM dual WHERE 1 = :number"]
         (is (= {:result 1}
                (tx-exec test-db/*db*
-                        (t/query-str stmt
+                        (t/query stmt
                                      :params {:number 1}
                                      :result-set-fn first))))
 
         (is (nil? (tx-exec test-db/*db*
-                           (t/query-str stmt
+                           (t/query stmt
                                         :params {:number 2}
                                         :result-set-fn first))))))
 
@@ -74,7 +74,7 @@
                  AND EXISTS (SELECT 1 FROM DUAL WHERE 2 = :another-number)"]
         (is (= {:result 1}
                (tx-exec test-db/*db*
-                        (t/query-str stmt
+                        (t/query stmt
                                      :params {:number 1
                                               :another-number 2}
                                      :result-set-fn first)))))))
@@ -83,7 +83,7 @@
     (let [stmt "SELECT 1 AS result FROM {{ schema }}.dual"]
       (is (= {:result 1}
              (tx-exec test-db/*db*
-                      (t/query-str stmt
+                      (t/query stmt
                                    :template-vars {:schema "PUBLIC"}
                                    :result-set-fn first)))))))
 
@@ -93,7 +93,7 @@
     (is (= {:result 1}
            (tx-exec-> test-db/*db*
                       [sql (t/load-statment "simple-select.sql")
-                       res (t/query-str sql :result-set-fn first)]
+                       res (t/query sql :result-set-fn first)]
                       res)))))
 
 (deftest insert!

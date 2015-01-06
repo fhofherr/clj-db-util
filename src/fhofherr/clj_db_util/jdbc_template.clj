@@ -7,7 +7,7 @@
             [fhofherr.clj-db-util.jdbc-template [template-vars :as tv]
                                                 [named-params :as np]]))
 
-(tx/deftx query-str
+(tx/deftx query
   [db sql-str & {:keys [params
                         template-vars
                         result-set-fn]
