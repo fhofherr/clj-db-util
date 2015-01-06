@@ -1,0 +1,43 @@
+S ::= STMT;
+
+STMT ::= TOKEN (SEPARATOR TOKEN)* ";"?;
+
+TOKEN ::= SQL_TOKEN | TEMPLATE_EXPR | NAMED_PARAM;
+
+SEPARATOR ::= #"\s+" | #"\s*,\s*" | #"\.";
+
+SQL_TOKEN ::= #"[^\s${}:]+" | QUOTED_SQL_TOKEN;
+
+<QUOTED_SQL_TOKEN> ::= SINGLE_QUOTED_SQL_TOKEN |
+                       DOUBLE_QUOTED_SQL_TOKEN |
+                       DOLLAR_QUOTED_SQL_TOKEN;
+
+<SINGLE_QUOTED_SQL_TOKEN> ::= "'" #'([^\']|\'\')+'? "'"
+
+<DOUBLE_QUOTED_SQL_TOKEN> ::= '\"' #'([^\"]|\"\")+' '\"'
+
+<DOLLAR_QUOTED_SQL_TOKEN> ::= "$$"
+                              ("$" |
+                               #"[^\$]+" |
+                               #"\$[^\$]+" |
+                               #"[^\$]+\$" |
+                               #"[^\$]+\$[^\$]+")?
+                               "$$"
+
+TEMPLATE_EXPR ::= TEMPLATE_VAR;
+
+TEMPLATE_LDELIM ::= "{{";
+
+TEMPLATE_RDELIM ::= "}}";
+
+TEMPLATE_VAR ::= <TEMPLATE_LDELIM>
+                 <#"\s*">
+                 TEMPLATE_VAR_NAME
+                 <#"\s*">
+                 <TEMPLATE_RDELIM>;
+
+<TEMPLATE_VAR_NAME> ::= NAME;
+
+NAMED_PARAM ::= <":"> NAME
+
+<NAME> ::= #"(?i)[A-Z_][A-Z0-9_-]*[A-Z0-9_]*"
