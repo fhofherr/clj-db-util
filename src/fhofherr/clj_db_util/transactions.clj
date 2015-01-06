@@ -67,12 +67,13 @@
   - `f` a function expecting one argument and returning a transaction."
   [tx f]
   (Transaction. (fn [dialect con]
-                  {:pre [dialect con]}
-                  (let [{con* ::connection v ::value} ((:op tx) dialect con)
-                        tx* (f v)]
-                    (if-not (jdbc/db-is-rollback-only con*)
-                      ((:op tx*) dialect con*)
-                      {::connection con* ::value nil})))))
+                  (if-not (jdbc/db-is-rollback-only con)
+                    (let [{con* ::connection v ::value} ((:op tx) dialect con)
+                          tx* (f v)]
+                      (if-not (jdbc/db-is-rollback-only con*)
+                        ((:op tx*) dialect con*)
+                        {::connection con* ::value nil}))
+                    {::connection con ::value nil}))))
 
 (deftx tx-rollback
   "Rollback the transaction. Further steps won't be executed."
