@@ -32,9 +32,10 @@
 
     (do (tx-exec-> test-db/*dialect*
                    test-db/*db-spec*
-                   _ (t/insert! :fruit {:name "Apple" :cost 2.99})
-                   _ (t/insert! :fruit_orders
-                                {:fruit_id 1 :customer_name "Fruit Sales Inc."}))
+                   [_ (t/insert! :fruit {:name "Apple" :cost 2.99})
+                    _ (t/insert! :fruit_orders
+                                 {:fruit_id 1 :customer_name "Fruit Sales Inc."})]
+                   _)
         (is (= {:fruit_name "Apple"
                 :customer_name "Fruit Sales Inc."}
                (tx-exec test-db/*dialect*

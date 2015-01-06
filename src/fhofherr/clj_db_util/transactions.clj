@@ -81,14 +81,16 @@
   (jdbc/db-set-rollback-only! con))
 
 (defn- emit-tx-step
-  [[arg tx-expr]]
+  [[arg tx-expr] last-exprs]
   (if tx-expr
     `(tx-bind (fn [~arg] ~tx-expr))
-    `(tx-bind (fn [~arg] (tx-return ~arg)))))
+    (if (seq last-exprs)
+      `(tx-bind (fn [~arg] (tx-return (do ~@last-exprs))))
+      `(tx-bind (fn [~arg] (tx-return ~arg))))))
 
 (defn- emit-tx-steps
-  [bindings]
-  (reduce (fn [a s] (conj a (emit-tx-step s))) [] bindings))
+  [bindings last-exprs]
+  (reduce (fn [a s] (conj a (emit-tx-step s last-exprs))) [] bindings))
 
 (defmacro tx->
   "Evaluate transactions within a lexical context. The values of the
@@ -102,7 +104,7 @@
         _ (t/insert! :fruit_orders
                      {:fruit_id 1 :customer_name \"Fruit Sales Inc.\"})
   ```"
-  [& bindings]
+  [bindings & last-exprs]
   (assert (even? (count bindings))
           "Need an even number of bindings!")
   (let [args (->> bindings
@@ -117,7 +119,7 @@
                            (lazy-cat (repeat nil)))
         reordered-bindings (partition 2 (interleave args other-tx-exprs))]
     `(-> ~first-tx-expr
-         ~@(emit-tx-steps reordered-bindings))))
+         ~@(emit-tx-steps reordered-bindings last-exprs))))
 
 (defn tx-exec
   "Execute the transaction `tx` in the database represented by `db-spec`.
@@ -130,5 +132,5 @@
 
 (defmacro tx-exec->
   "Like [[tx->]] but immediately call [[tx-exec]] on the result."
-  [dialect db-spec & bindings]
-  `(tx-exec ~dialect ~db-spec (tx-> ~@bindings)))
+  [dialect db-spec bindings & last-exprs]
+  `(tx-exec ~dialect ~db-spec (tx-> ~bindings ~@last-exprs)))
