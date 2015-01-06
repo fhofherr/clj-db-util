@@ -1,6 +1,6 @@
-(ns fhofherr.clj-db-util.dialect.parser-test
+(ns fhofherr.clj-db-util.jdbc-template.parser-test
   (:require [clojure.test :refer :all]
-            [fhofherr.clj-db-util.dialect.parser :as parser]))
+            [fhofherr.clj-db-util.jdbc-template.parser :as parser]))
 
 (deftest plain-statements
   (is (= [:S

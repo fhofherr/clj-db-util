@@ -1,4 +1,4 @@
-(ns fhofherr.clj-db-util.dialect.parser
+(ns fhofherr.clj-db-util.jdbc-template.parser
   (:require [clojure.java.io :refer [resource]]
             [clojure.tools.logging :as log]
             [instaparse.core :as insta]))

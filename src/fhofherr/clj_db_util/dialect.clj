@@ -3,8 +3,7 @@
   (:require [clojure.java.io :as io]
             [clojure.tools.logging :as log]
             [instaparse.core :as insta]
-            [fhofherr.clj-db-util.dialect [h2 :as h2-dialect]
-                                          [ast :as ast]]))
+            [fhofherr.clj-db-util.dialect.h2 :as h2-dialect]))
 
 (def h2 {::name :h2
          ::resource-path "db/h2"
@@ -13,10 +12,6 @@
 (defn set-resource-path
   [dialect resource-path]
   (assoc dialect ::resource-path resource-path))
-
-(defn ast-to-str
-  [dialect tree]
-  (ast/ast-to-str tree (::replacements dialect)))
 
 (defn statements-loc
   "Get the path where the dialect expects its statement resources.

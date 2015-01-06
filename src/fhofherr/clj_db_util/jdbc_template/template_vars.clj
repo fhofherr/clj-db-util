@@ -1,8 +1,8 @@
 (ns fhofherr.clj-db-util.jdbc-template.template-vars
   (:require [clojure.zip :as zip]
             [clojure.tools.logging :as log]
-            [fhofherr.clj-db-util.dialect.parser :as parser]
-            [fhofherr.clj-db-util.dialect.ast :as ast]))
+            [fhofherr.clj-db-util.jdbc-template [parser :as parser]
+                                                [ast :as ast]]))
 
 (defn- variable-not-found
   [errors var-name loc]

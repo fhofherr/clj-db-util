@@ -1,6 +1,6 @@
 (ns fhofherr.clj-db-util.jdbc-template.named-params
   (:require [clojure.zip :as zip]
-            [fhofherr.clj-db-util.dialect.ast :as ast]))
+            [fhofherr.clj-db-util.jdbc-template.ast :as ast]))
 
 (defn named-param?
   "Check if given location within an AST represents a named parameter.
@@ -12,8 +12,7 @@
 
   - `loc` a location within an AST."
   [loc]
-  (and (ast/rule? loc)
-       (= :NAMED_PARAM (ast/get-rule loc))))
+  (ast/rule= :NAMED_PARAM loc))
 
 (defn- do-extract
   [[ps loc]]
