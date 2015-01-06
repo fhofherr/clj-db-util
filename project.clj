@@ -5,6 +5,7 @@
         :url "https://github.com/fhofherr/clj-db-util"}
   :license {:name "MIT"
             :url "http://opensource.org/licenses/MIT"}
+  :global-vars {*warn-on-reflection* true}
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [org.clojure/java.jdbc "0.3.6"]
                  [org.clojure/tools.logging "0.3.1"]
@@ -13,6 +14,7 @@
   :profiles  {:dev  {:source-paths ["dev"]
                      :resource-paths ["test-resources"]
                      :plugins [[codox "0.8.10"]]
+                     :global-vars {*warn-on-reflection* false}
                      :codox {:output-dir "target/codox"
                              :exclude [user]
                              :defaults {:doc/format :markdown}}
