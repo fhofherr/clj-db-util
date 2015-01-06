@@ -12,7 +12,8 @@
   - `db` the database to connect to."
   [db & options]
   (log/info "Preparing to migrate database.")
-  (fw/migrate (db/dialect db) (db/db-spec db) options))
+  (fw/migrate (db/dialect db) (db/db-spec db) options)
+  db)
 
 (defn clean
   "Clean the database identified by`db`.
@@ -25,4 +26,5 @@
 
   - `db` the database to clean."
   [db & options]
-  (fw/clean (db/dialect db) (db/db-spec db) options))
+  (fw/clean (db/dialect db) (db/db-spec db) options)
+  db)
