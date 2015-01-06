@@ -27,11 +27,10 @@
                     :result-set-fn result-set-fn))
       (log/error "Query was empty!"))))
 
-(defn query-res
-  [dialect stmt-path & options]
-  (let [sql-str (d/load-statement dialect stmt-path)]
-    (tx/tx-bind (tx/tx-return sql-str)
-                #(apply query-str % options))))
+(tx/deftx load-statment
+  "Load a statement from a resource file using the database's dialect."
+  [db stmt-path]
+  (d/load-statement (db-con/dialect db) stmt-path))
 
 (tx/deftx insert!
   "Wrapper around `clojure.java.jdbc/insert!`.

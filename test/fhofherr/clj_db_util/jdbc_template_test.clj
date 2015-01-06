@@ -87,14 +87,14 @@
                                    :template-vars {:schema "PUBLIC"}
                                    :result-set-fn first)))))))
 
-(deftest query-res
+(deftest query-resource
 
   (testing "simple select"
     (is (= {:result 1}
-           (tx-exec test-db/*db*
-                    (t/query-res (db-repr/dialect test-db/*db*)
-                                 "simple-select.sql"
-                                 :result-set-fn first))))))
+           (tx-exec-> test-db/*db*
+                      [sql (t/load-statment "simple-select.sql")
+                       res (t/query-str sql :result-set-fn first)]
+                      res)))))
 
 (deftest insert!
 
