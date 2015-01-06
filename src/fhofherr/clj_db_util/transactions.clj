@@ -3,7 +3,7 @@
             [fhofherr.clj-db-util.db :as db-repr]))
 
 ;; Wrapper for a transaction. `op` is a function of one argument returning
-;; a map {::connection con ::value v}. The argument to `op` is the database
+;; a map {::db con ::value v}. The argument to `op` is the database
 ;; currently in use.
 (defrecord Transaction [op])
 
@@ -13,7 +13,9 @@
 (defmacro deftx
   "Define a function that creates a transaction. The first entry of the
   definitions argument vector will be bound to the database used during the
-  execution of the transaction. Further arguments are optional."
+  execution of the transaction. Further arguments are optional. While
+  the resulting functions have access to the object representing the database
+  any modifications they make to it will be lost."
   {:arglists '([fn-name [db & args] & body]
                [fn-name doc-string [db & args] & body])}
   [fn-name & body]
@@ -26,7 +28,7 @@
     `(defn ~fn-name {:doc ~doc-string}
        [~@(rest args)]
        (Transaction. (fn [~(first args)]
-                       {::connection ~(first args)
+                       {::db ~(first args)
                         ::value (do ~@(seq decls))})))))
 
 (defmacro deftx-
@@ -52,7 +54,7 @@
   [db v]
   v)
 
-;; Can't use deftx here as we need to return con* for the ::connection.
+;; Can't use deftx here as we need to return con* for the ::db.
 ;; If we would use deftx con would be returned.
 (defn tx-bind
   "Take a transacton `tx` containting a value `v` and a function `f` of
@@ -66,12 +68,21 @@
   [tx f]
   (Transaction. (fn [db]
                   (if-not (jdbc/db-is-rollback-only (db-repr/db-spec db))
-                    (let [{db* ::connection v ::value} ((:op tx) db)
+                    (let [{db* ::db v ::value} ((:op tx) db)
                           tx* (f v)]
                       (if-not (jdbc/db-is-rollback-only (db-repr/db-spec db*))
                         ((:op tx*) db*)
-                        {::connection db* ::value nil}))
-                    {::connection db ::value nil}))))
+                        {::db db* ::value nil}))
+                    {::db db ::value nil}))))
+
+(defn tx-exec
+  "Execute the transaction `tx` in the database represented by `db-spec`.
+  The `dialect` is added for convenience since some database functions need it
+  to perform their tasks (this might not be a good idea, in which case I'll
+  remove the dialect)."
+  [db tx]
+  (jdbc/with-db-transaction [db* (db-repr/db-spec db)]
+    (::value ((:op tx) (db-repr/from-db-spec (db-repr/dialect db) db*)))))
 
 (deftx tx-rollback
   "Rollback the transaction. Further steps won't be executed."
@@ -118,15 +129,6 @@
         reordered-bindings (partition 2 (interleave args other-tx-exprs))]
     `(-> ~first-tx-expr
          ~@(emit-tx-steps reordered-bindings last-exprs))))
-
-(defn tx-exec
-  "Execute the transaction `tx` in the database represented by `db-spec`.
-  The `dialect` is added for convenience since some database functions need it
-  to perform their tasks (this might not be a good idea, in which case I'll
-  remove the dialect)."
-  [db tx]
-  (jdbc/with-db-transaction [db* (db-repr/db-spec db)]
-    (::value ((:op tx) (db-repr/from-db-spec (db-repr/dialect db) db*)))))
 
 (defmacro tx-exec->
   "Like [[tx->]] but immediately call [[tx-exec]] on the result."
