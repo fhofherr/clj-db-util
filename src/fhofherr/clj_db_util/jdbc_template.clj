@@ -2,6 +2,7 @@
   (:require [clojure.tools.logging :as log]
             [clojure.java.jdbc :as jdbc]
             [fhofherr.clj-db-util.db :as db-con]
+            [fhofherr.clj-db-util.dialect.parser :as parser]
             [fhofherr.clj-db-util.dialect :as d]
             [fhofherr.clj-db-util.transactions :as tx]
             [fhofherr.clj-db-util.jdbc-template [template-vars :as tv]
@@ -15,8 +16,8 @@
                       :template-vars {}
                       :result-set-fn doall}}]
   (let [[argv tree] (->> sql-str
-                         (d/parse (db-con/dialect db))
-                         (tv/process-template-vars (db-con/dialect db) template-vars)
+                         (parser/parse)
+                         (tv/process-template-vars template-vars)
                          (np/process-named-params params))
         stmt (d/ast-to-str (db-con/dialect db) tree)]
     (if (not-empty stmt)
@@ -27,7 +28,7 @@
                     :result-set-fn result-set-fn))
       (log/error "Query was empty!"))))
 
-(tx/deftx load-statment
+(tx/deftx load-statement
   "Load a statement from a resource file using the database's dialect."
   [db stmt-path]
   (d/load-statement (db-con/dialect db) stmt-path))

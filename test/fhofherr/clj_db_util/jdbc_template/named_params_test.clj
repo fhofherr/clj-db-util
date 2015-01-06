@@ -3,20 +3,20 @@
             [fhofherr.clj-db-util.jdbc-template.named-params :as np]))
 
 (deftest extract-named-params
-  (is (= [[:param-name] [:PARAM]]
-         (np/extract-named-params [:NAMED-PARAM "param-name"])))
-  (is (= [[:param-name] [:PARAM]]
-         (np/extract-named-params [:NAMED-PARAM "PARAM-NAME"])))
+  (is (= [[:param-name] [:SQL_TOKEN "?"]]
+         (np/extract-named-params [:NAMED_PARAM "param-name"])))
+  (is (= [[:param-name] [:SQL_TOKEN "?"]]
+         (np/extract-named-params [:NAMED_PARAM "PARAM-NAME"])))
   (let [ast [:PARENT
-             [:NAMED-PARAM "PARAM1"]
+             [:NAMED_PARAM "PARAM1"]
              [:PARENT
-              [:PARENT [:NAMED-PARAM "param2"]]
-              [:NAMED-PARAM "param3"]]]
+              [:PARENT [:NAMED_PARAM "param2"]]
+              [:NAMED_PARAM "param3"]]]
         expected-ast [:PARENT
-                      [:PARAM]
+                      [:SQL_TOKEN "?"]
                       [:PARENT
-                       [:PARENT [:PARAM]]
-                       [:PARAM]]]
+                       [:PARENT [:SQL_TOKEN "?"]]
+                       [:SQL_TOKEN "?"]]]
         param-list [:param1 :param2 :param3]]
     (is (= [param-list expected-ast]
            (np/extract-named-params ast)))))

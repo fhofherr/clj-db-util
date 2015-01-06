@@ -6,27 +6,14 @@
   "Check if given location within an AST represents a named parameter.
 
   The location within the AST has to be a rule as defined by [[ast/rule?]] and
-  its rule name has to be `:NAMED-PARAM`.
+  its rule name has to be `:NAMED_PARAM`.
 
   *Parameters*:
 
   - `loc` a location within an AST."
   [loc]
   (and (ast/rule? loc)
-       (= :NAMED-PARAM (ast/get-rule loc))))
-
-(defn param?
-  "Check if given location within an AST represents a positional parameter.
-
-  The location within the AST has to be a rule as defined by [[ast/rule?]] and
-  its rule name has to be `:PARAM`.
-
-  *Parameters*:
-
-  - `loc` a location within an AST."
-  [loc]
-  (and (ast/rule? loc)
-       (= :PARAM (ast/get-rule loc))))
+       (= :NAMED_PARAM (ast/get-rule loc))))
 
 (defn- do-extract
   [[ps loc]]
@@ -36,7 +23,7 @@
                          (second)
                          (clojure.string/lower-case)
                          (keyword))
-          next-loc (zip/next (zip/replace loc [:PARAM]))]
+          next-loc (zip/next (zip/replace loc [:SQL_TOKEN "?"]))]
       [(conj ps param-name) next-loc])
     [ps (zip/next loc)]))
 

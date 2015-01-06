@@ -42,7 +42,49 @@
            [:TOKEN [:SQL_TOKEN "FROM"]]
            [:SEPARATOR " "]
            [:TOKEN [:SQL_TOKEN "dual"]]]]
-         (parser/parse "SELECT 'name' as result FROM dual"))))
+         (parser/parse "SELECT 'name' as result FROM dual")))
+
+  (is (= [:S
+          [:STMT
+           [:TOKEN [:SQL_TOKEN "SELECT"]]
+           [:SEPARATOR " "]
+           [:TOKEN [:SQL_TOKEN "1"]]
+           [:SEPARATOR " "]
+           [:TOKEN [:SQL_TOKEN "FROM"]]
+           [:SEPARATOR " "]
+           [:TOKEN [:SQL_TOKEN "dual"]]
+           [:SEPARATOR " "]
+           [:TOKEN [:SQL_TOKEN "WHERE"]]
+           [:SEPARATOR " "]
+           [:TOKEN [:SQL_TOKEN "1"]]
+           [:SEPARATOR " "]
+           [:TOKEN [:SQL_TOKEN "="]]
+           [:SEPARATOR " "]
+           [:TOKEN [:SQL_TOKEN "1"]]
+           [:SEPARATOR " "]
+           [:TOKEN [:SQL_TOKEN "AND"]]
+           [:SEPARATOR " "]
+           [:TOKEN [:SQL_TOKEN "EXISTS"]]
+           [:SEPARATOR " "]
+           [:TOKEN "("
+            [:STMT
+             [:TOKEN [:SQL_TOKEN "SELECT"]]
+             [:SEPARATOR " "]
+             [:TOKEN [:SQL_TOKEN "1"]]
+             [:SEPARATOR " "]
+             [:TOKEN [:SQL_TOKEN "FROM"]]
+             [:SEPARATOR " "]
+             [:TOKEN [:SQL_TOKEN "DUAL"]]
+             [:SEPARATOR " "]
+             [:TOKEN [:SQL_TOKEN "WHERE"]]
+             [:SEPARATOR " "]
+             [:TOKEN [:SQL_TOKEN "2"]]
+             [:SEPARATOR " "]
+             [:TOKEN [:SQL_TOKEN "="]]
+             [:SEPARATOR " "]
+             [:TOKEN [:SQL_TOKEN "2"]]]
+            ")"]]]
+         (parser/parse "SELECT 1 FROM dual WHERE 1 = 1 AND EXISTS (SELECT 1 FROM DUAL WHERE 2 = 2)"))))
 
 (deftest parse-dollar-quoted-sql-token
   (is (= [:SQL_TOKEN "$$" "$$"]
