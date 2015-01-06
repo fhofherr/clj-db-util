@@ -4,6 +4,7 @@
             [fhofherr.clj-db-util.dialect :refer [h2]])
   (:import [org.h2.jdbcx JdbcDataSource]))
 
+(def ^:dynamic *db* nil)
 (def ^:dynamic *db-spec* nil)
 (def ^:dynamic *dialect* nil)
 
@@ -13,13 +14,14 @@
     (let [db (db-factory)
           db-spec (db/db-spec db)
           dialect (db/dialect db)]
-      (binding [*db-spec* db-spec
+      (apply migs/migrate db options)
+      (binding [*db* db
+                *db-spec* db-spec
                 *dialect* dialect]
         (assert *db-spec*)
         (assert *dialect*)
-        (apply migs/migrate dialect db-spec options)
-        (f)
-        (apply migs/clean dialect db-spec options)))))
+        (f))
+      (apply migs/clean db options))))
 
 (defn h2-in-memory
   []
