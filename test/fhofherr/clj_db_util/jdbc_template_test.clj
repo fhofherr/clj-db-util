@@ -9,8 +9,7 @@
 
 (deftest query
 
-  ; TODO
-  #_(testing "syntax errors"
+  (testing "syntax errors"
 
     (let [stmt "Not SQL in any dialect."]
       (is (nil? (tx-exec test-db/*db*

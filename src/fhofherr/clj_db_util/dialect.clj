@@ -8,29 +8,11 @@
 
 (def h2 {::name :h2
          ::resource-path "db/h2"
-         ::parser h2-dialect/h2-parser
-         ::replacements h2-dialect/replacements
          ::gen-key-extractor h2-dialect/get-generated-key})
 
 (defn set-resource-path
   [dialect resource-path]
   (assoc dialect ::resource-path resource-path))
-
-(defn parse
-  "Use the `dialect`'s parser to parse the `sql-str`.
-
-  Return the AST representation of the statement if parsing was successful, or
-  `nil` if a parse error occured.
-
-  *Parameters*:
-
-  - `dialect` the SQL dialect to use
-  - `sql-str` the SQL string to parse."
-  [dialect sql-str & insta-opts]
-  (let [ast (apply (::parser dialect) sql-str insta-opts)]
-    (if (insta/failure? ast)
-      (log/fatal (insta/get-failure ast))
-      ast)))
 
 (defn ast-to-str
   [dialect tree]
