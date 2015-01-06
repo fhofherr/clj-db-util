@@ -5,7 +5,8 @@
   "Create an object representing a database for use by clj-db-utils functions."
   [dialect ^DataSource ds & {:as options}]
   {::dialect dialect
-   ::db-spec {:datasource ds}})
+   ::db-spec {:datasource ds}
+   ::pooled? (:pooled options false)})
 
 (defn from-db-spec
   "Create an object representing a database from an existing db-spec for use
@@ -24,3 +25,7 @@
 (defn dialect
   [db]
   (::dialect db))
+
+(defn pooled?
+  [db]
+  (::pooled? db false))

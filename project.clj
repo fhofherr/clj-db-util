@@ -6,7 +6,8 @@
   :license {:name "MIT"
             :url "http://opensource.org/licenses/MIT"}
   :global-vars {*warn-on-reflection* true}
-  :dependencies [[org.clojure/clojure "1.6.0"]
+  :dependencies [[com.zaxxer/HikariCP-java6 "2.2.5"]
+                 [org.clojure/clojure "1.6.0"]
                  [org.clojure/java.jdbc "0.3.6"]
                  [org.clojure/tools.logging "0.3.1"]
                  [org.flywaydb/flyway-core "3.1"]
