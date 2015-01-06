@@ -1,7 +1,7 @@
 (ns fhofherr.clj-db-util.jdbc-template
   (:require [clojure.tools.logging :as log]
             [clojure.java.jdbc :as jdbc]
-            [fhofherr.clj-db-util.db :as db-repr]
+            [fhofherr.clj-db-util.db :as db-con]
             [fhofherr.clj-db-util.dialect :as d]
             [fhofherr.clj-db-util.transactions :as tx]
             [fhofherr.clj-db-util.jdbc-template [template-vars :as tv]
@@ -16,14 +16,14 @@
                       ;; TODO identity is wrong!
                       :result-set-fn identity}}]
   (let [[argv tree] (->> sql-str
-                         (d/parse (db-repr/dialect db))
-                         (tv/process-template-vars (db-repr/dialect db) template-vars)
+                         (d/parse (db-con/dialect db))
+                         (tv/process-template-vars (db-con/dialect db) template-vars)
                          (np/process-named-params params))
-        stmt (d/ast-to-str (db-repr/dialect db) tree)]
+        stmt (d/ast-to-str (db-con/dialect db) tree)]
     (if (not-empty stmt)
       (do
         (log/infof "Executing query: '%s'" stmt)
-        (jdbc/query (db-repr/db-spec db)
+        (jdbc/query (db-con/db-spec db)
                     (into [stmt] argv)
                     :result-set-fn result-set-fn))
       (log/error "Query was empty!"))))
@@ -51,7 +51,7 @@
   If multiple rows are inserted using a single insert the total number of rows
   inserted will be returned."
   [db table & options]
-  (let [xs (apply jdbc/insert! (db-repr/db-spec db) table options)]
+  (let [xs (apply jdbc/insert! (db-con/db-spec db) table options)]
     (if (map? (first options)) ;; Check if we are inserting row maps
-      (d/get-generated-keys (db-repr/dialect db) xs)
+      (d/get-generated-keys (db-con/dialect db) xs)
       (count xs))))

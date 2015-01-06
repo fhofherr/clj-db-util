@@ -1,6 +1,6 @@
 (ns fhofherr.clj-db-util.transactions
   (:require [clojure.java.jdbc :as jdbc]
-            [fhofherr.clj-db-util.db :as db-repr]))
+            [fhofherr.clj-db-util.db :as db-con]))
 
 ;; Wrapper for a transaction. `op` is a function of one argument returning
 ;; a map {::db con ::value v}. The argument to `op` is the database
@@ -67,10 +67,10 @@
   - `f` a function expecting one argument and returning a transaction."
   [tx f]
   (Transaction. (fn [db]
-                  (if-not (jdbc/db-is-rollback-only (db-repr/db-spec db))
+                  (if-not (jdbc/db-is-rollback-only (db-con/db-spec db))
                     (let [{db* ::db v ::value} ((:op tx) db)
                           tx* (f v)]
-                      (if-not (jdbc/db-is-rollback-only (db-repr/db-spec db*))
+                      (if-not (jdbc/db-is-rollback-only (db-con/db-spec db*))
                         ((:op tx*) db*)
                         {::db db* ::value nil}))
                     {::db db ::value nil}))))
@@ -82,13 +82,13 @@
   remove the dialect)."
   [db tx]
   (io!
-    (jdbc/with-db-transaction [db* (db-repr/db-spec db)]
-      (::value ((:op tx) (db-repr/from-db-spec (db-repr/dialect db) db*))))))
+    (jdbc/with-db-transaction [db* (db-con/db-spec db)]
+      (::value ((:op tx) (db-con/from-db-spec (db-con/dialect db) db*))))))
 
 (deftx tx-rollback
   "Rollback the transaction. Further steps won't be executed."
   [db]
-  (jdbc/db-set-rollback-only! (db-repr/db-spec db)))
+  (jdbc/db-set-rollback-only! (db-con/db-spec db)))
 
 (defn- emit-tx-step
   [[arg tx-expr] last-exprs]
