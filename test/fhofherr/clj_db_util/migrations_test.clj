@@ -16,14 +16,12 @@
 
 (deftest schema-support
   (is (= [1]
-         (tx-exec test-db/*dialect*
-                  test-db/*db-spec*
+         (tx-exec test-db/*db*
                   (t/insert! :MIG_TEST.vegetables {:name "Cucumber"})))))
 
 (deftest placeholder-support
   (is (= {:placeholder_value placeholder-value}
-         (tx-exec test-db/*dialect*
-                  test-db/*db-spec*
+         (tx-exec test-db/*db*
                   (t/query-str 
                     "SELECT placeholder_value 
                     FROM MIG_TEST.placeholder_support

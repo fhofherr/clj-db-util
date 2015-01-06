@@ -5,8 +5,6 @@
   (:import [org.h2.jdbcx JdbcDataSource]))
 
 (def ^:dynamic *db* nil)
-(def ^:dynamic *db-spec* nil)
-(def ^:dynamic *dialect* nil)
 
 (defn prepare-db
   [dialect db-factory & options]
@@ -15,11 +13,7 @@
           db-spec (db/db-spec db)
           dialect (db/dialect db)]
       (apply migs/migrate db options)
-      (binding [*db* db
-                *db-spec* db-spec
-                *dialect* dialect]
-        (assert *db-spec*)
-        (assert *dialect*)
+      (binding [*db* db]
         (f))
       (apply migs/clean db options))))
 

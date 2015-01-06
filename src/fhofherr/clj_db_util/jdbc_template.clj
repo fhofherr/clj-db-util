@@ -1,28 +1,29 @@
 (ns fhofherr.clj-db-util.jdbc-template
   (:require [clojure.tools.logging :as log]
             [clojure.java.jdbc :as jdbc]
+            [fhofherr.clj-db-util.db :as db-repr]
             [fhofherr.clj-db-util.dialect :as d]
             [fhofherr.clj-db-util.transactions :as tx]
             [fhofherr.clj-db-util.jdbc-template [template-vars :as tv]
                                                 [named-params :as np]]))
 
 (tx/deftx query-str
-  [dialect db-spec sql-str & {:keys [params
-                                     template-vars
-                                     result-set-fn]
-                              :or {:params {}
-                                   :template-vars {}
-                                   ;; TODO identity is wrong!
-                                   :result-set-fn identity}}]
+  [db sql-str & {:keys [params
+                        template-vars
+                        result-set-fn]
+                 :or {:params {}
+                      :template-vars {}
+                      ;; TODO identity is wrong!
+                      :result-set-fn identity}}]
   (let [[argv tree] (->> sql-str
-                         (d/parse dialect)
-                         (tv/process-template-vars dialect template-vars)
+                         (d/parse (db-repr/dialect db))
+                         (tv/process-template-vars (db-repr/dialect db) template-vars)
                          (np/process-named-params params))
-        stmt (d/ast-to-str dialect tree)]
+        stmt (d/ast-to-str (db-repr/dialect db) tree)]
     (if (not-empty stmt)
       (do
         (log/infof "Executing query: '%s'" stmt)
-        (jdbc/query db-spec
+        (jdbc/query (db-repr/db-spec db)
                     (into [stmt] argv)
                     :result-set-fn result-set-fn))
       (log/error "Query was empty!"))))
@@ -49,8 +50,8 @@
   multiple inserts were inserted a sequence of generated keys will be returned.
   If multiple rows are inserted using a single insert the total number of rows
   inserted will be returned."
-  [dialect db-spec table & options]
-  (let [xs (apply jdbc/insert! db-spec table options)]
+  [db table & options]
+  (let [xs (apply jdbc/insert! (db-repr/db-spec db) table options)]
     (if (map? (first options)) ;; Check if we are inserting row maps
-      (d/get-generated-keys dialect xs)
+      (d/get-generated-keys (db-repr/dialect db) xs)
       (count xs))))

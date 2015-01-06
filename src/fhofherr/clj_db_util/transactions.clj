@@ -1,9 +1,10 @@
 (ns fhofherr.clj-db-util.transactions
-  (:require [clojure.java.jdbc :as jdbc]))
+  (:require [clojure.java.jdbc :as jdbc]
+            [fhofherr.clj-db-util.db :as db-repr]))
 
-;; Wrapper for a transaction. `op` is a function of two arguments returning
-;; a map {::connection con ::value v}. The first argument to `op` is the
-;; dialect currently in use, the second the connection.
+;; Wrapper for a transaction. `op` is a function of one argument returning
+;; a map {::connection con ::value v}. The argument to `op` is the database
+;; currently in use.
 (defrecord Transaction [op])
 
 (alter-meta! #'->Transaction assoc :no-doc true)
@@ -11,30 +12,27 @@
 
 (defmacro deftx
   "Define a function that creates a transaction. The first entry of the
-  definitions argument vector will be bound to the dialect used during the
-  execution of the transaction. The second entry of the argument vector
-  will be bound to the current database connection. Further arguments are
-  optional."
-  {:arglists '([fn-name [dialect db-spec & args] & body]
-               [fn-name doc-string [dialect db-spec & args] & body])}
+  definitions argument vector will be bound to the database used during the
+  execution of the transaction. Further arguments are optional."
+  {:arglists '([fn-name [db & args] & body]
+               [fn-name doc-string [db & args] & body])}
   [fn-name & body]
   (let [has-doc? (string? (first body))
         doc-string (if has-doc? (first body) nil)
         [args & decls] (if has-doc? (rest body) body)]
-    (assert (symbol? fn-name)
-            "Need a symbol as function name!")
-    (assert (<= 2 (count args))
-            "The first two arguments are needed for dialect and db-spec!")
+    (assert (symbol? fn-name) "Need a symbol as function name!")
+    (assert (<= 1 (count args))
+            "The first arguments is needed for the database!")
     `(defn ~fn-name {:doc ~doc-string}
-       [~@(drop 2 args)]
-       (Transaction. (fn [~@(take 2 args)]
-                       {::connection ~(second args)
-                        ::value (do ~@decls)})))))
+       [~@(rest args)]
+       (Transaction. (fn [~(first args)]
+                       {::connection ~(first args)
+                        ::value (do ~@(seq decls))})))))
 
 (defmacro deftx-
   "Same as [[deftx]] but yielding a non-public def."
-  {:arglists '([fn-name [dialect db-spec & args] & body]
-               [fn-name doc-string [dialect db-spec & args] & body])}
+  {:arglists '([fn-name [db & args] & body]
+               [fn-name doc-string [db & args] & body])}
   [fn-name & body]
   `(deftx ~(with-meta fn-name (assoc (meta fn-name) :private true))
      ~@body))
@@ -42,7 +40,7 @@
 (deftx tx-apply
   "Take the function `f` and apply it to the values `v` and `vs` within
   the context of a transaction."
-  [dialect con f v & vs]
+  [db f v & vs]
   (apply f v vs))
 
 (deftx tx-return
@@ -51,7 +49,7 @@
   *Parameters*:
 
   - `v` an arbitrary value to wrap into a transaction."
-  [dialect db-spec v]
+  [db v]
   v)
 
 ;; Can't use deftx here as we need to return con* for the ::connection.
@@ -66,19 +64,19 @@
   - `tx` a transaction.
   - `f` a function expecting one argument and returning a transaction."
   [tx f]
-  (Transaction. (fn [dialect con]
-                  (if-not (jdbc/db-is-rollback-only con)
-                    (let [{con* ::connection v ::value} ((:op tx) dialect con)
+  (Transaction. (fn [db]
+                  (if-not (jdbc/db-is-rollback-only (db-repr/db-spec db))
+                    (let [{db* ::connection v ::value} ((:op tx) db)
                           tx* (f v)]
-                      (if-not (jdbc/db-is-rollback-only con*)
-                        ((:op tx*) dialect con*)
-                        {::connection con* ::value nil}))
-                    {::connection con ::value nil}))))
+                      (if-not (jdbc/db-is-rollback-only (db-repr/db-spec db*))
+                        ((:op tx*) db*)
+                        {::connection db* ::value nil}))
+                    {::connection db ::value nil}))))
 
 (deftx tx-rollback
   "Rollback the transaction. Further steps won't be executed."
-  [dialect con]
-  (jdbc/db-set-rollback-only! con))
+  [db]
+  (jdbc/db-set-rollback-only! (db-repr/db-spec db)))
 
 (defn- emit-tx-step
   [[arg tx-expr] last-exprs]
@@ -126,11 +124,11 @@
   The `dialect` is added for convenience since some database functions need it
   to perform their tasks (this might not be a good idea, in which case I'll
   remove the dialect)."
-  [dialect db-spec tx]
-  (jdbc/with-db-transaction [con db-spec]
-    (::value ((:op tx) dialect con))))
+  [db tx]
+  (jdbc/with-db-transaction [db* (db-repr/db-spec db)]
+    (::value ((:op tx) (db-repr/from-db-spec (db-repr/dialect db) db*)))))
 
 (defmacro tx-exec->
   "Like [[tx->]] but immediately call [[tx-exec]] on the result."
-  [dialect db-spec bindings & last-exprs]
-  `(tx-exec ~dialect ~db-spec (tx-> ~bindings ~@last-exprs)))
+  [db bindings & last-exprs]
+  `(tx-exec ~db (tx-> ~bindings ~@last-exprs)))
