@@ -81,8 +81,9 @@
   to perform their tasks (this might not be a good idea, in which case I'll
   remove the dialect)."
   [db tx]
-  (jdbc/with-db-transaction [db* (db-repr/db-spec db)]
-    (::value ((:op tx) (db-repr/from-db-spec (db-repr/dialect db) db*)))))
+  (io!
+    (jdbc/with-db-transaction [db* (db-repr/db-spec db)]
+      (::value ((:op tx) (db-repr/from-db-spec (db-repr/dialect db) db*))))))
 
 (deftx tx-rollback
   "Rollback the transaction. Further steps won't be executed."
