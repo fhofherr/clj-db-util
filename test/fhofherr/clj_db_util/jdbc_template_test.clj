@@ -3,10 +3,9 @@
             [fhofherr.clj-db-util.db :as db-repr]
             [fhofherr.clj-db-util.support.test-db :as test-db]
             [fhofherr.clj-db-util.jdbc-template :as t]
-            [fhofherr.clj-db-util.transactions :refer [tx-exec tx-exec->]]
-            [fhofherr.clj-db-util.dialect :refer [h2]]))
+            [fhofherr.clj-db-util.transactions :refer [tx-exec tx-exec->]]))
 
-(use-fixtures :each (test-db/prepare-db h2 test-db/h2-in-memory))
+(use-fixtures :each (test-db/prepare-db test-db/h2-in-memory))
 
 (deftest query-str
 

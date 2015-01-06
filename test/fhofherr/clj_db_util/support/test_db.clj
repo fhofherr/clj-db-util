@@ -7,7 +7,7 @@
 (def ^:dynamic *db* nil)
 
 (defn prepare-db
-  [dialect db-factory & options]
+  [db-factory & options]
   (fn [f]
     (let [db (db-factory)
           db-spec (db/db-spec db)
