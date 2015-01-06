@@ -29,4 +29,4 @@
              (.setUrl "jdbc:h2:mem:h2-test;DB_CLOSE_DELAY=-1")
              (.setUser "")
              (.setPassword ""))]
-    (db/make-db h2 ds)))
+    (db/from-datasource h2 ds)))

@@ -1,7 +1,7 @@
 (ns fhofherr.clj-db-util.db
   (:import [javax.sql DataSource]))
 
-(defn make-db
+(defn from-datasource
   "Create an object representing a database for use by clj-db-utils functions."
   [dialect ^DataSource ds & {:as options}]
   {::dialect dialect
