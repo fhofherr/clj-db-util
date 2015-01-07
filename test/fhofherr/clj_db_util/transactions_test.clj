@@ -33,6 +33,15 @@
              (tx/tx-exec test-db/*db*
                          (tx/tx-bind tx #(tx/tx-bind (f %) g))))))))
 
+(deftest bind-values
+  (is (= [:a :b :c :d]
+         (tx/tx-exec-> test-db/*db*
+                       [a (tx/tx-return [:a])
+                        b (tx/tx-return (conj a :b))
+                        c (tx/tx-return (conj b :c))
+                        d (tx/tx-return (conj c :d))]
+                       d))))
+
 (deftest tx-apply
   (is (= 70
          (tx/tx-exec-> test-db/*db*

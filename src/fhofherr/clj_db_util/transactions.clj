@@ -91,16 +91,16 @@
   (jdbc/db-set-rollback-only! (db-con/db-spec db)))
 
 (defn- emit-tx-step
-  [[arg tx-expr] last-exprs]
-  (if tx-expr
-    `(tx-bind (fn [~arg] ~tx-expr))
-    (if (seq last-exprs)
-      `(tx-bind (fn [~arg] (tx-return (do ~@last-exprs))))
-      `(tx-bind (fn [~arg] (tx-return ~arg))))))
+  [expr [arg tx]]
+  `(tx-bind ~tx (fn [~arg] ~expr)))
 
 (defn- emit-tx-steps
-  [bindings last-exprs]
-  (reduce (fn [a s] (conj a (emit-tx-step s last-exprs))) [] bindings))
+  [bindings body-exprs]
+  (let [bs (reverse (partition 2 bindings))
+        e (if (seq body-exprs)
+            `(tx-return (do ~@body-exprs))
+            `(tx-return ~(ffirst bs)))]
+    (reduce emit-tx-step e bs)))
 
 (defmacro tx->
   "Evaluate transactions within a lexical context. The values of the
@@ -114,24 +114,12 @@
         _ (t/insert! :fruit_orders
                      {:fruit_id 1 :customer_name \"Fruit Sales Inc.\"})
   ```"
-  [bindings & last-exprs]
+  [bindings & body]
   (assert (even? (count bindings))
           "Need an even number of bindings!")
-  (let [args (->> bindings
-               (partition 2)
-               (map first))
-        exprs (->> bindings
-                (partition 2)
-                (map second))
-        first-tx-expr (first exprs)
-        other-tx-exprs (-> exprs
-                           (rest)
-                           (lazy-cat (repeat nil)))
-        reordered-bindings (partition 2 (interleave args other-tx-exprs))]
-    `(-> ~first-tx-expr
-         ~@(emit-tx-steps reordered-bindings last-exprs))))
+  (emit-tx-steps bindings body))
 
 (defmacro tx-exec->
   "Like [[tx->]] but immediately call [[tx-exec]] on the result."
-  [db bindings & last-exprs]
-  `(tx-exec ~db (tx-> ~bindings ~@last-exprs)))
+  [db bindings & body]
+  `(tx-exec ~db (tx-> ~bindings ~@body)))
