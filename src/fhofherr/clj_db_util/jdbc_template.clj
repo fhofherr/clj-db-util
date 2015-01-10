@@ -1,7 +1,7 @@
 (ns fhofherr.clj-db-util.jdbc-template
   (:require [clojure.tools.logging :as log]
             [clojure.java.jdbc :as jdbc]
-            [fhofherr.clj-db-util.db :as db-con]
+            [fhofherr.clj-db-util.db-connection :as db-con]
             [fhofherr.clj-db-util.jdbc-template [ast :as ast]
                                                 [parser :as parser]]
             [fhofherr.clj-db-util.dialect :as d]

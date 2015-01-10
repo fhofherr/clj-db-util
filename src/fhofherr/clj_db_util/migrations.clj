@@ -1,12 +1,12 @@
 (ns fhofherr.clj-db-util.migrations
   (:require [clojure.tools.logging :as log]
-            [fhofherr.clj-db-util.db :as db]
+            [fhofherr.clj-db-util.db-connection :as db-con]
             [fhofherr.clj-db-util.migrations.flyway :as fw]))
 
 (defn info
   [db & options]
    (log/info "Retreiving database migration information.")
-   (fw/info (db/dialect db) (db/db-spec db) options))
+   (fw/info (db-con/dialect db) (db-con/db-spec db) options))
 
 (defn migrate
   "Migrate the database identified by `db`.
@@ -17,7 +17,7 @@
   - `db` the database to connect to."
   [db & options]
   (log/info "Preparing to migrate database.")
-  (fw/migrate (db/dialect db) (db/db-spec db) options)
+  (fw/migrate (db-con/dialect db) (db-con/db-spec db) options)
   db)
 
 (defn clean
@@ -31,5 +31,5 @@
 
   - `db` the database to clean."
   [db & options]
-  (fw/clean (db/dialect db) (db/db-spec db) options)
+  (fw/clean (db-con/dialect db) (db-con/db-spec db) options)
   db)

@@ -1,6 +1,6 @@
 (ns fhofherr.clj-db-util.transactions
   (:require [clojure.java.jdbc :as jdbc]
-            [fhofherr.clj-db-util.db :as db-con]))
+            [fhofherr.clj-db-util.db-connection :as db-con]))
 
 ;; Wrapper for a transaction. `op` is a function of one argument returning
 ;; a map {::db con ::value v}. The argument to `op` is the database

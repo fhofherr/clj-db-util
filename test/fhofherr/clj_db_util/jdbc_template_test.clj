@@ -1,6 +1,5 @@
 (ns fhofherr.clj-db-util.jdbc-template-test
   (:require [clojure.test :refer :all]
-            [fhofherr.clj-db-util.db :as db-repr]
             [fhofherr.clj-db-util.support.test-db :as test-db]
             [fhofherr.clj-db-util.jdbc-template :as t]
             [fhofherr.clj-db-util.transactions :refer [tx-exec tx-exec->]]))
