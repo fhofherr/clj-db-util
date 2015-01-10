@@ -96,6 +96,11 @@
                         {::db db* ::value nil}))
                     {::db db ::value nil}))))
 
+(deftx tx-dialect
+  "Obtain the dialect currently in use."
+  [db]
+  (db-con/dialect db))
+
 (defn tx-exec
   "Execute the transaction `tx` in the database represented by `db-spec`. "
   [db tx]
