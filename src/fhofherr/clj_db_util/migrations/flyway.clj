@@ -17,7 +17,8 @@
           (.setDataSource flyway datasource)
           (.setDataSource flyway url user password))
         flyway)
-    (log/fatal "Neither datasource nor url, user, and password given!")))
+    (throw (IllegalArgumentException.
+             "Neither datasource nor url, user, and password given!"))))
 
 (defn- set-migrations-loc
   [flyway migration-loc]
@@ -26,7 +27,8 @@
     (do 
       (.setLocations flyway (into-array String [migration-loc]))
       flyway)
-    (log/fatalf "Migraion loc '%s' is missing!" migration-loc)))
+    (throw (IllegalArgumentException.
+             (format "Migraion loc '%s' is missing!" migration-loc)))))
 
 (defn- set-schema
   [flyway schema]
@@ -44,8 +46,7 @@
           (convert-entries [[k v]] [(name k) (str v)])]
     (.setPlaceholders flyway (as-> {} $
                                  (add-schema $)
-                                 (into $ (map convert-entries placeholders))))
-    )
+                                 (into $ (map convert-entries placeholders)))))
   flyway)
 
 (defn- mk-flyway-callback
@@ -116,7 +117,7 @@
   [dialect {:keys [datasource url user password]} {:keys [schema
                                                           placeholders]
                                                    :as options}]
-  (some-> (Flyway.)
+  (-> (Flyway.)
     (set-datasource datasource url user password)
     (set-schema schema)
     (set-placeholders placeholders schema)
@@ -146,17 +147,15 @@
 
 (defn migrate
   [dialect db-spec options]
-  (if-let [fw (create-flyway dialect db-spec options)]
+  (let [fw (create-flyway dialect db-spec options)]
     (when (has-pending-migrations? fw)
       (do
         (.migrate fw)
-        db-spec))
-    (log/fatalf "Could not create flyway!")))
+        db-spec))))
 
 (defn clean
   [dialect db-spec options]
-  (if-let [fw (create-flyway dialect db-spec options)]
+  (let [fw (create-flyway dialect db-spec options)]
     (do
       (.clean fw)
-      db-spec)
-    (log/fatalf "Could not create flyway!")))
+      db-spec)))
