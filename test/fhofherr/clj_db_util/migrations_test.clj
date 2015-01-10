@@ -38,29 +38,32 @@
       (testing "migration callbacks"
 
         (do (reset-callbacks)
+            (migs/clean test-db/*db*)
             (migs/migrate test-db/*db*
                           :callbacks [{:before-migrate [before-migrate]}
                                       {:after-migrate [after-migrate]}])
             (is (= [:before-migrate :after-migrate] @callbacks)))
 
         (do (reset-callbacks)
+            (migs/clean test-db/*db*)
             (migs/migrate test-db/*db*
                           :callbacks [{:before-migrate [before-migrate]
                                        :after-migrate [after-migrate]}])
             (is (= [:before-migrate :after-migrate] @callbacks)))
 
         (do (reset-callbacks)
+            (migs/clean test-db/*db*)
             (migs/migrate test-db/*db*
                           :callbacks {:before-migrate [before-migrate]
                                       :after-migrate [after-migrate]})
             (is (= [:before-migrate :after-migrate] @callbacks)))
 
         (do (reset-callbacks)
+            (migs/clean test-db/*db*)
             (migs/migrate test-db/*db*
                           :callbacks {:before-migrate before-migrate
                                       :after-migrate after-migrate})
-            (is (= [:before-migrate :after-migrate] @callbacks)))
-        )
+            (is (= [:before-migrate :after-migrate] @callbacks))))
 
       (testing "clean callbacks"
 

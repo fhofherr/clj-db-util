@@ -3,6 +3,11 @@
             [fhofherr.clj-db-util.db :as db]
             [fhofherr.clj-db-util.migrations.flyway :as fw]))
 
+(defn info
+  [db & options]
+   (log/info "Retreiving database migration information.")
+   (fw/info (db/dialect db) (db/db-spec db) options))
+
 (defn migrate
   "Migrate the database identified by `db`.
   Return the `db` representing the migrated database.

@@ -123,12 +123,34 @@
     (set-callbacks options)
     (set-migrations-loc (d/migrations-loc dialect schema))))
 
+
+(defn- get-info
+  [fw]
+  (letfn [(convert-info [is] (map bean is))]
+    (let [mig-info-service (.info fw)]
+     {:pending (convert-info (.pending mig-info-service))
+      :applied (convert-info (.applied mig-info-service))
+      :current (convert-info (.current mig-info-service))})))
+
+(defn- has-pending-migrations?
+  [fw]
+  (-> fw
+      (get-info)
+      (:pending)
+      (not-empty)))
+
+(defn info
+  [dialect db-spec options]
+  (let [fw (create-flyway dialect db-spec options)]
+      (get-info fw)))
+
 (defn migrate
   [dialect db-spec options]
   (if-let [fw (create-flyway dialect db-spec options)]
-    (do
-      (.migrate fw)
-      db-spec)
+    (when (has-pending-migrations? fw)
+      (do
+        (.migrate fw)
+        db-spec))
     (log/fatalf "Could not create flyway!")))
 
 (defn clean
