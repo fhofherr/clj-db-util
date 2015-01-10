@@ -97,10 +97,7 @@
                     {::db db ::value nil}))))
 
 (defn tx-exec
-  "Execute the transaction `tx` in the database represented by `db-spec`.
-  The `dialect` is added for convenience since some database functions need it
-  to perform their tasks (this might not be a good idea, in which case I'll
-  remove the dialect)."
+  "Execute the transaction `tx` in the database represented by `db-spec`. "
   [db tx]
   (io!
     (jdbc/with-db-transaction [db* (db-con/db-spec db)]
