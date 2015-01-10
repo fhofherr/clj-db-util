@@ -16,18 +16,20 @@
                  :or {:params {}
                       :template-vars {}
                       :result-set-fn doall}}]
+  (when (empty? sql-str)
+    (throw (IllegalArgumentException. "No sql-str given!")))
   (let [[argv tree] (->> sql-str
                          (parser/parse)
                          (tv/process-template-vars template-vars)
                          (np/process-named-params params))
         stmt (ast/ast-to-str tree)]
-    (if (not-empty stmt)
+    (if-not (empty? stmt)
       (do
         (log/infof "Executing query: '%s'" stmt)
         (jdbc/query (db-con/db-spec db)
                     (into [stmt] argv)
                     :result-set-fn result-set-fn))
-      (log/error "Query was empty!"))))
+      (throw (IllegalArgumentException. "Could not parse query!")))))
 
 (tx/deftx load-statement
   "Load a statement from a resource file using the database's dialect."

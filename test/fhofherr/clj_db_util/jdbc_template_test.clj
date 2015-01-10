@@ -12,8 +12,16 @@
   (testing "syntax errors"
 
     (let [stmt "Not SQL in any dialect."]
-      (is (nil? (tx-exec test-db/*db*
-                         (t/query stmt))))))
+      (is (thrown? IllegalArgumentException
+                   (tx-exec test-db/*db* (t/query stmt)))))
+
+    (let [stmt ""]
+      (is (thrown? IllegalArgumentException
+                   (tx-exec test-db/*db* (t/query stmt)))))
+
+    (let [stmt nil]
+      (is (thrown? IllegalArgumentException
+                   (tx-exec test-db/*db* (t/query stmt))))))
 
   (testing "simple statements"
 

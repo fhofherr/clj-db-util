@@ -40,8 +40,7 @@
   "Load a SQL statement from a resource.
 
   The `stmt-path` is interpreted as a sub-path of the dialect's
-  [[statements-loc]]. Returns the statement as a string or `nil` if
-  no statement could be found.
+  [[statements-loc]]. Returns the statement as a string.
 
   *Parameters*:
 
@@ -52,7 +51,8 @@
         r (io/resource p)]
     (if r
       (slurp r)
-      (log/fatalf "Could not load statement '%s'" p))))
+      (throw  (RuntimeException.
+                (format "Could not load statement '%s'" p))))))
 
 (defn get-generated-keys
   "Given a sequence `ms` of maps try to extract the generated keys
