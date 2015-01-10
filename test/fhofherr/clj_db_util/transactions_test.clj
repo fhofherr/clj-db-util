@@ -33,6 +33,16 @@
              (tx/tx-exec test-db/*db*
                          (tx/tx-bind tx #(tx/tx-bind (f %) g))))))))
 
+(deftest argument-validation
+  (testing "tx-bind"
+    (is (thrown? IllegalArgumentException
+                 (tx/tx-exec test-db/*db*
+                             (tx/tx-bind :not-a-transaction #(tx/tx-return %)))))
+
+    (is (thrown? IllegalArgumentException
+                 (tx/tx-exec test-db/*db*
+                             (tx/tx-bind (tx/tx-return :something) identity))))))
+
 (deftest bind-values
   (is (= [:a :b :c :d]
          (tx/tx-exec-> test-db/*db*

@@ -10,6 +10,25 @@
 (alter-meta! #'->Transaction assoc :no-doc true)
 (alter-meta! #'map->Transaction assoc :no-doc true)
 
+(defn transaction?
+  "Check if the value `x` is a transaction.
+
+  *Parameters*:
+
+  - `x` the value that might be a transaction."
+  [x]
+  (instance? Transaction x))
+
+(defn- check-transaction
+  [x]
+  (when-not (transaction? x)
+    (throw (IllegalArgumentException. "Transaction required!"))))
+
+(defn- apply-op
+  [tx db]
+  (check-transaction tx)
+  ((:op tx) db))
+
 (defmacro deftx
   "Define a function that creates a transaction. The first entry of the
   definitions argument vector will be bound to the database used during the
@@ -66,12 +85,14 @@
   - `tx` a transaction.
   - `f` a function expecting one argument and returning a transaction."
   [tx f]
+  (check-transaction tx)
   (Transaction. (fn [db]
                   (if-not (jdbc/db-is-rollback-only (db-con/db-spec db))
-                    (let [{db* ::db v ::value} ((:op tx) db)
+                    (let [{db* ::db v ::value} (apply-op tx db)
                           tx* (f v)]
+                      (check-transaction tx*)
                       (if-not (jdbc/db-is-rollback-only (db-con/db-spec db*))
-                        ((:op tx*) db*)
+                        (apply-op tx* db*)
                         {::db db* ::value nil}))
                     {::db db ::value nil}))))
 
@@ -83,7 +104,7 @@
   [db tx]
   (io!
     (jdbc/with-db-transaction [db* (db-con/db-spec db)]
-      (::value ((:op tx) (db-con/from-db-spec (db-con/dialect db) db*))))))
+      (::value (apply-op tx (db-con/from-db-spec (db-con/dialect db) db*))))))
 
 (deftx tx-rollback
   "Rollback the transaction. Further steps won't be executed."
