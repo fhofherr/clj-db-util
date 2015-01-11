@@ -36,6 +36,10 @@
   [db sql-str & {:as options}]
   (execute-sql-str jdbc/query db sql-str options))
 
+(tx/deftx execute!
+  [db sql-str & {:as options}]
+  (execute-sql-str jdbc/execute! db sql-str options))
+
 (tx/deftx load-statement
   "Load a statement from a resource file using the database's dialect."
   [db stmt-path]
