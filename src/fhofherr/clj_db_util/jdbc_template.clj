@@ -9,27 +9,32 @@
             [fhofherr.clj-db-util.jdbc-template [template-vars :as tv]
                                                 [named-params :as np]]))
 
-(tx/deftx query
-  [db sql-str & {:keys [params
-                        template-vars
-                        result-set-fn]
-                 :or {:params {}
-                      :template-vars {}
-                      :result-set-fn doall}}]
+(defn- execute-sql-str
+  [f db sql-str options]
   (when (empty? sql-str)
     (throw (IllegalArgumentException. "No sql-str given!")))
   (let [[argv tree] (->> sql-str
                          (parser/parse)
-                         (tv/process-template-vars template-vars)
-                         (np/process-named-params params))
-        stmt (ast/ast-to-str tree)]
+                         (tv/process-template-vars (:template-vars options {}))
+                         (np/process-named-params (:params options {})))
+        stmt (ast/ast-to-str tree)
+        jdbc-opts (-> options
+                   (dissoc :template-vars)
+                   (dissoc :params)
+                   (seq)
+                   (flatten))]
     (if-not (empty? stmt)
       (do
         (log/infof "Executing query: '%s'" stmt)
-        (jdbc/query (db-con/db-spec db)
-                    (into [stmt] argv)
-                    :result-set-fn result-set-fn))
+        (apply f
+               (db-con/db-spec db)
+               (into [stmt] argv)
+               jdbc-opts))
       (throw (IllegalArgumentException. "Could not parse query!")))))
+
+(tx/deftx query
+  [db sql-str & {:as options}]
+  (execute-sql-str jdbc/query db sql-str options))
 
 (tx/deftx load-statement
   "Load a statement from a resource file using the database's dialect."
