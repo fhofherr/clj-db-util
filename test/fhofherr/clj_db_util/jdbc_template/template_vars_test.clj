@@ -13,6 +13,10 @@
            (tv/process-template-vars {:schema "PUBLIC"}
                                      [:TEMPLATE_VAR "SCHEMA"])))
 
+    (is (= [:SQL_TOKEN "1"]
+           (tv/process-template-vars {:number 1}
+                                     [:TEMPLATE_VAR "number"])))
+
     (is (nil? (tv/process-template-vars {}
                                         [:TEMPLATE_VAR "schema"])))
 

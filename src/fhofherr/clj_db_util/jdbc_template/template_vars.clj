@@ -17,7 +17,7 @@
 
 (defn- replace-template-var
   [loc value]
-  (let [parsed (parser/parse value :start :SQL_TOKEN)]
+  (let [parsed (parser/parse (str value) :start :SQL_TOKEN)]
     (when parsed
       (zip/next (zip/replace loc parsed)))))
 
