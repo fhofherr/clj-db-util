@@ -103,6 +103,15 @@
                        res (t/query sql :result-set-fn first)]
                       res)))))
 
+(deftest execute!
+
+  (testing "insert statements"
+    (is (= [1]
+           (tx-exec-> test-db/*db*
+                      [res (t/execute! "INSERT INTO fruit (name, cost)
+                                        VALUES ('Orange', 2.34)")]
+                      res)))))
+
 (deftest insert!
 
   (testing "insert single row"

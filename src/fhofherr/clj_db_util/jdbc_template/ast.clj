@@ -127,4 +127,4 @@
     (->> (iterate-ast add-str [] ast)
       (first)
       (filter (complement nil?))
-      (clojure.string/join " "))))
+      (clojure.string/join ""))))

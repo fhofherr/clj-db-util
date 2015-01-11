@@ -2,12 +2,19 @@ S ::= STMT STMT_SEPARATOR?;
 
 STMT_SEPARATOR ::= #"\s*;\s*";
 
-STMT ::= TOKEN (SEPARATOR TOKEN)*;
+STMT ::= TOKEN FURTHER_TOKENS*;
 
 TOKEN ::= SQL_TOKEN |
           TEMPLATE_EXPR |
-          NAMED_PARAM |
-          "(" <#"\s*"> STMT <#"\s*"> ")";
+          NAMED_PARAM;
+
+<FURTHER_TOKENS> ::= SEPARATOR TOKEN |
+                   (<#"\s*">
+                    "("
+                    <#"\s*">
+                    STMT
+                    <#"\s*"> ")"
+                    FURTHER_TOKENS*);
 
 SEPARATOR ::= #"\s+" | #"\s*,\s*" | #"\.";
 
