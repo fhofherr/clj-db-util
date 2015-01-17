@@ -146,3 +146,16 @@
   "Like [[tx->]] but immediately call [[tx-exec]] on the result."
   [db bindings & body]
   `(tx-exec ~db (tx-> ~bindings ~@body)))
+
+(defn tx-seq
+  "Given a collection `txs` of transactions return a transaction containing
+  a collection of `txs` values.
+
+  *Parameters*:
+
+  - `txs` a collection of transactions."
+  [txs]
+  (if (seq txs)
+    (letfn [(combine-txs [agg-tx tx] (tx-> [vs agg-tx, v tx] (conj vs v)))]
+      (tx-> [vs (reduce combine-txs (tx-return []) txs)] (seq vs)))
+    (tx-return nil)))

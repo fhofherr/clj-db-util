@@ -85,3 +85,21 @@
   (is (empty? (tx/tx-exec test-db/*db*
                           (t/query "SELECT value
                                        FROM TX_TEST.some_table")))))
+
+(deftest tx-seq
+  (testing "empty collection of transactions"
+    (is (= (tx/tx-exec test-db/*db* (tx/tx-return nil))
+           (tx/tx-exec test-db/*db* (tx/tx-seq []))))
+
+    (is (= (tx/tx-exec test-db/*db* (tx/tx-return nil))
+           (tx/tx-exec test-db/*db* (tx/tx-seq nil)))))
+
+  (testing "non-empty collection of transactions"
+    (let [x (tx/tx-return :x)
+          y (tx/tx-return :y)]
+      (is (= [(tx/tx-exec test-db/*db* x) (tx/tx-exec test-db/*db* y)]
+             (tx/tx-exec test-db/*db* (tx/tx-seq [x y]))))))
+
+  (testing "returns sequence"
+    (is (seq? (tx/tx-exec test-db/*db*
+                          (tx/tx-seq [(tx/tx-return :z)]))))))
