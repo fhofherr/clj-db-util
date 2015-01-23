@@ -71,7 +71,21 @@
         (is (nil? (tx-exec test-db/*db*
                            (t/query stmt
                                         :params {:number 2}
-                                        :result-set-fn first))))))
+                                        :result-set-fn first)))))
+
+      (let [stmt "SELECT :v AS result FROM DUAL"]
+        (is (= {:result 1}
+               (tx-exec test-db/*db*
+                        (t/query stmt
+                                 :params {:v 1}
+                                 :result-set-fn first)))))
+
+      (let [stmt "SELECT cast(:v as int) AS result FROM DUAL"]
+        (is (= {:result 1}
+               (tx-exec test-db/*db*
+                        (t/query stmt
+                                 :params {:v 1}
+                                 :result-set-fn first))))))
 
     (testing "subselects"
 
