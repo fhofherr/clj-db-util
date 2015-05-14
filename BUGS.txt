@@ -1,1 +1,0 @@
-- from-datasource ignores :pooled option
