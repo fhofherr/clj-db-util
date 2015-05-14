@@ -3,12 +3,15 @@
   (:import [javax.sql DataSource]
            [com.zaxxer.hikari HikariConfig HikariDataSource]))
 
+;; TODO: document options
 (defn from-datasource
   "Create an object representing a database for use by clj-db-utils functions."
   [dialect ^DataSource ds & {:as options}]
   {::dialect dialect
    ::db-spec {:datasource ds}
-   ::pooled? (:pooled options false)})
+   ::pooled? false
+   ::jdbc-options {:identifiers (:identifiers options clojure.string/lower-case)
+                   :entities (:entities options identity)}})
 
 (defn update-db-spec
   "Given a database `db` update the db-spec contained within `db`.
@@ -22,12 +25,19 @@
   (assoc db ::db-spec db-spec))
 
 (defn db-spec
+  {:deprecated "0.1.0"}
   [db]
   (::db-spec db))
 
 (defn dialect
+  {:deprecated "0.1.0"}
   [db]
   (::dialect db))
+
+(defn jdbc-options
+  {:deprecated "0.1.0"}
+  [db]
+  (::jdbc-options db))
 
 (defn- create-con-pool
   [^DataSource ds]

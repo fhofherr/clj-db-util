@@ -18,11 +18,11 @@
                          (tv/process-template-vars (:template-vars options {}))
                          (np/process-named-params (:params options {})))
         stmt (ast/ast-to-str tree)
-        jdbc-opts (-> options
-                   (dissoc :template-vars)
-                   (dissoc :params)
-                   (seq)
-                   (flatten))]
+        jdbc-opts (as-> options $
+                      (dissoc $ :template-vars :params)
+                      (merge (db-con/jdbc-options db) $)
+                      (seq $)
+                      (flatten $))]
     (if-not (empty? stmt)
       (do
         (log/infof "Executing query: '%s'" stmt)
@@ -61,8 +61,17 @@
   multiple inserts were inserted a sequence of generated keys will be returned.
   If multiple rows are inserted using a single insert the total number of rows
   inserted will be returned."
-  [db table & options]
-  (let [xs (apply jdbc/insert! (db-con/db-spec db) table options)]
-    (if (map? (first options)) ;; Check if we are inserting row maps
+  [db table & args]
+  (let [[clauses options] (split-with (complement keyword) args)
+        jdbc-opts (as-> options $
+                    (apply hash-map $)
+                    (merge (db-con/jdbc-options db) $)
+                    (seq $)
+                    (flatten $))
+        xs (apply jdbc/insert!
+                  (db-con/db-spec db)
+                  table
+                  (concat clauses jdbc-opts))]
+    (if (map? (first args)) ;; Check if we are inserting row maps
       (d/get-generated-keys (db-con/dialect db) xs)
       (count xs))))

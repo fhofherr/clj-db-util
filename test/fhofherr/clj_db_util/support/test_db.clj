@@ -9,7 +9,7 @@
 (defn prepare-db
   [db-factory & options]
   (fn [f]
-    (let [db (as-> (db-factory) $
+    (let [db (as-> (apply db-factory options) $
                (apply migs/migrate $ options)
                (db-con/wrap-db $))]
       (binding [*db* db]
@@ -19,9 +19,9 @@
         (apply migs/clean $ options)))))
 
 (defn h2-in-memory
-  []
+  [& options]
   (let [ds (doto (JdbcDataSource.)
              (.setUrl "jdbc:h2:mem:h2-test;DB_CLOSE_DELAY=-1")
              (.setUser "")
              (.setPassword ""))]
-    (db-con/from-datasource h2 ds)))
+    (apply db-con/from-datasource h2 ds options)))
