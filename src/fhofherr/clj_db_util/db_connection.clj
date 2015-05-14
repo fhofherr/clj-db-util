@@ -10,15 +10,16 @@
    ::db-spec {:datasource ds}
    ::pooled? (:pooled options false)})
 
-(defn from-db-spec
-  "Create an object representing a database from an existing db-spec for use
-  by clj-db-utils functions.
+(defn update-db-spec
+  "Given a database `db` update the db-spec contained within `db`.
 
   **Warning**: This function is mostly for internal use. Clients should not
-  need to call it! Use [[from-datasource]] instead!"
-  [dialect db-spec]
-  {::dialect dialect
-   ::db-spec db-spec})
+  need to call it! It is necessary due to the currently unfortunate
+  structuring of the namespaces. It will be removed as soon as the
+  namespaces have been restructured."
+  {:deprecated "0.1.0"}
+  [db db-spec]
+  (assoc db ::db-spec db-spec))
 
 (defn db-spec
   [db]

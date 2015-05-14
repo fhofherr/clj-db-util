@@ -105,8 +105,8 @@
   "Execute the transaction `tx` in the database represented by `db-spec`. "
   [db tx]
   (io!
-    (jdbc/with-db-transaction [db* (db-con/db-spec db)]
-      (::value (apply-op tx (db-con/from-db-spec (db-con/dialect db) db*))))))
+    (jdbc/with-db-transaction [db-spec (db-con/db-spec db)]
+      (::value (apply-op tx (db-con/update-db-spec db db-spec))))))
 
 (deftx tx-rollback
   "Rollback the transaction. Further steps won't be executed."
