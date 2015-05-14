@@ -29,34 +29,44 @@
   [db]
   (::dialect db))
 
-(defn pooled?
-  [db]
-  (::pooled? db false))
-
 (defn- create-con-pool
   [^DataSource ds]
   (let [cfg (doto (HikariConfig.)
               (.setDataSource ds))]
     (HikariDataSource. cfg)))
 
-(defn wrap-db
+(defn wrap-pool
   "Create a connection pool and wrap the data source used to connect to
   the database into it."
   [db]
   (log/info "Creating HikariCP connection pool.")
-  (let [db-spec (db-spec db)
-        dialect (dialect db)
-        pooled-ds (create-con-pool (:datasource db-spec))]
-    (from-datasource dialect pooled-ds :pooled true)))
+  (if-not (::pooled? db)
+    (let [ds (:datasource (db-spec db))
+         pooled-ds (create-con-pool ds)]
+     (as-> db $
+       (update-db-spec $ {:datasource pooled-ds})
+       (assoc $ ::pooled? true)))
+    db))
 
+(defn wrap-db
+  "Create a connection pool and wrap the data source used to connect to
+  the database into it.
+
+  *Deprecated*: use wrap-pool instead"
+  {:deprecated "0.1.0"}
+  [db]
+  (wrap-pool db))
+ 
 (defn shutdown-pool
   "If the database uses a pooled data source shut it down."
   [db]
   {:pre [(:datasource (db-spec db))]}
-  (if (pooled? db)
-    (let [pool (:datasource (db-spec db))
-          ds (.getDataSource pool)]
-      (.shutdown pool)
+  (if (::pooled? db)
+    (let [pooled-ds (:datasource (db-spec db))
+          ds (.getDataSource pooled-ds)]
+      (.shutdown pooled-ds)
       (log/info "Shutdown of HikariCP connection pool successful.")
-      (from-datasource (dialect db) ds))
+      (as-> db $
+        (update-db-spec $ {:datasource ds})
+        (assoc $ ::pooled? false)))
     db))
