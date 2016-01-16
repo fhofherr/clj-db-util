@@ -1,4 +1,4 @@
-(defproject fhofherr/clj-db-util "0.1.0"
+(defproject fhofherr/clj-db-util "0.2.0-SNAPSHOT"
   :description "Various utilities for talking to your database."
   :url "https://github.com/fhofherr/clj-db-util"
   :scm {:name "git"
