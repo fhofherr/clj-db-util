@@ -9,6 +9,8 @@
   :dependencies [[org.clojure/clojure "1.7.0"]
                  [org.clojure/java.jdbc "0.4.2"]
                  [org.clojure/tools.logging "0.3.1"]]
+  :test-selectors {:default (complement :dbtest)
+                   :integration :integration}
   :profiles  {:dev  {:source-paths ["dev"]
                      :resource-paths ["test-resources"]
                      :plugins [[codox "0.9.1"]]
@@ -16,4 +18,6 @@
                              :metadata {:doc/format :markdown}}
                      :dependencies [[org.clojure/tools.namespace "0.2.10"]
                                     [org.slf4j/slf4j-api "1.7.13"]
-                                    [org.slf4j/slf4j-nop "1.7.13"]]}})
+                                    [org.slf4j/slf4j-nop "1.7.13"]]}
+              :postgres {:dependencies [[org.postgresql/postgresql "9.4-1206-jdbc42"]]}
+              :h2 {:dependencies [[com.h2database/h2 "1.4.190"]]}})
