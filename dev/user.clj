@@ -6,7 +6,7 @@
 
 (defn- do-test
   []
-  (t/run-all-tests #"fhofherr\.clj-db-util(\..+)?-test"))
+  (t/run-all-tests #"fhofherr\.clj-db-util\.test\.(\..+)?-test"))
 
 (defn run-tests
   []
