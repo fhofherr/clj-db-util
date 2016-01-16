@@ -1,0 +1,6 @@
+export DB_DIALECT="h2"
+export DB_USER=""
+export DB_PASS=""
+export DB_NAME="./clj_db_util_test_db"
+export DB_HOST=""
+export DB_URL="jdbc:${DB_DIALECT}:${DB_NAME}"

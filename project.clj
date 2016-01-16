@@ -8,15 +8,18 @@
   :global-vars {*warn-on-reflection* true}
   :dependencies [[org.clojure/clojure "1.7.0"]
                  [org.clojure/java.jdbc "0.4.2"]
-                 [org.clojure/tools.logging "0.3.1"]]
-  :test-selectors {:default (complement :dbtest)
+                 [org.clojure/tools.logging "0.3.1"]
+                 [com.zaxxer/HikariCP "2.4.3"]]
+  :test-selectors {:default (complement :integration)
                    :integration :integration}
   :profiles  {:dev  {:source-paths ["dev"]
                      :resource-paths ["test-resources"]
                      :plugins [[codox "0.9.1"]]
                      :codox {:namespaces [#"^fhofherr\.clj-db-util\."]
                              :metadata {:doc/format :markdown}}
-                     :dependencies [[org.clojure/tools.namespace "0.2.10"]
+                     :dependencies [[environ "1.0.1"
+                                     :exclusions [org.clojure/clojure]]
+                                    [org.clojure/tools.namespace "0.2.10"]
                                     [org.slf4j/slf4j-api "1.7.13"]
                                     [org.slf4j/slf4j-nop "1.7.13"]]}
               :postgres {:dependencies [[org.postgresql/postgresql "9.4-1206-jdbc42"]]}
