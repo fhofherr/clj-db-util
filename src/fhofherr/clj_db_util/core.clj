@@ -4,7 +4,7 @@
 (defn connect-db
   [url user password]
   {:pre [url user password]}
-  {:datasource (database/datasource url user password)})
+  (database/new-database url user password))
 
 (defn verify-connection
   [db]
