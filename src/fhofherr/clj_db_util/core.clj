@@ -9,8 +9,7 @@
 (defn verify-connection
   [db]
   {:pre [db]}
-  (let [c (-> (:datasource db)
-              (.getConnection))]
+  (let [c  (.getConnection ^javax.sql.DataSource (:datasource db))]
     (try
       (.isValid c 5)
       (finally
