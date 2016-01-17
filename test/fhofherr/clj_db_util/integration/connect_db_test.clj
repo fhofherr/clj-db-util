@@ -7,5 +7,5 @@
   (let [url (env :db-url)
         user (env :db-user)
         password (env :db-pass)
-        db-spec (db-util/db-spec url user password)]
-    (is (true? (db-util/verify-connection db-spec)))))
+        db (db-util/connect-db url user password)]
+    (is (true? (db-util/verify-connection db)))))
