@@ -6,6 +6,12 @@
   {:pre [url user password]}
   (database/new-database url user password))
 
+(defn migrate-db
+  [db])
+
+(defn db-version
+  [db])
+
 (defn verify-connection
   [db]
   {:pre [db]}

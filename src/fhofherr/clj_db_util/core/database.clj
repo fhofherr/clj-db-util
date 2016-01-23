@@ -1,7 +1,8 @@
 (ns fhofherr.clj-db-util.core.database
-  (:import [com.zaxxer.hikari HikariConfig HikariDataSource]))
+  (:import [com.zaxxer.hikari HikariConfig HikariDataSource]
+           (javax.sql DataSource)))
 
-(defrecord Database [^javax.sql.DataSource datasource])
+(defrecord Database [^DataSource datasource])
 
 (alter-meta! #'->Database assoc :no-doc true)
 (alter-meta! #'map->Database assoc :no-doc true)
@@ -14,3 +15,6 @@
               (.setPassword password))
         ds (HikariDataSource. cfg)]
     (map->Database {:datasource ds})))
+
+(defn new-migrator
+  [db])

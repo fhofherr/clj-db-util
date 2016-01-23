@@ -9,7 +9,8 @@
   :dependencies [[org.clojure/clojure "1.7.0"]
                  [org.clojure/java.jdbc "0.4.2"]
                  [org.clojure/tools.logging "0.3.1"]
-                 [com.zaxxer/HikariCP "2.4.3"]]
+                 [com.zaxxer/HikariCP "2.4.3"]
+                 [org.flywaydb/flyway-core "3.2.1"]]
   :test-selectors {:default (complement :integration)
                    :integration :integration}
   :profiles  {:dev  {:source-paths ["dev"]
