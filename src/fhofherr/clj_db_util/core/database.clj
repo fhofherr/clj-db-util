@@ -17,8 +17,8 @@
     (.startsWith url "jdbc:h2") :h2
     (.startsWith url "jdbc:postgresql") :postgres
     :else (throw (ex-info (format "Can't determine vendor for database url: %s" url)
-                    {:cause #{:unknown-database-vendor}
-                     :url url}))))
+                          {:cause #{:unknown-database-vendor}
+                           :url url}))))
 
 (defn new-database
   [^String url ^String user ^String password]
@@ -45,7 +45,7 @@
   [db]
   {:pre [(:datasource db)]}
   (let [fw (doto
-             (Flyway.)
+            (Flyway.)
              (.setDataSource (:datasource db))
              (.setLocations (into-array String [(migrations-loc db)])))
         fw (if (= (:schema db) "default")
@@ -66,8 +66,8 @@
 (defn version
   [db]
   (when-let [mig-info (-> db
-                     (info)
-                     (.current))]
+                          (info)
+                          (.current))]
     (-> mig-info
         (.getVersion)
         (.getVersion))))
