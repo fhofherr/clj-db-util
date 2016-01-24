@@ -78,3 +78,7 @@
   {:pre [migrator]}
   (.migrate migrator)
   (version db))
+
+(defn clean
+  [{:keys [migrator]}]
+  (.clean migrator))

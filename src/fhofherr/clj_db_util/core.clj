@@ -15,6 +15,10 @@
   [db]
   (database/migrate db))
 
+(defn clean-db
+  [db]
+  (database/clean db))
+
 (defn db-version
   [db]
   (database/version db))
@@ -32,3 +36,21 @@
   [db]
   {:pre [db]}
   (database/close db))
+
+(defmacro transactional-let
+  [bindings & body])
+
+(defn transactional
+  [value])
+
+(defn insert!
+  [table & records])
+
+(defn delete!
+  [table condition])
+
+(defn query-str
+  [stmt-str])
+
+(defn with-db-transaction
+  [txop db])
