@@ -1,12 +1,18 @@
-.PHONY: vgup pgtest h2test integration-test
+.PHONY: vgup pgtest h2test unittest simple integration-test
 
 vgup:
 	vagrant up
 
 pgtest: vgup
-	vagrant ssh -c "cd /vagrant && source /vagrant/scripts/vagrant/pg_env.sh && lein with-profile +postgres test :integration"
+	vagrant ssh -c "/vagrant/scripts/vagrant/pgtest.sh"
 
 h2test: vgup
-	vagrant ssh -c "cd /vagrant && source /vagrant/scripts/vagrant/h2_env.sh && lein with-profile +h2 test :integration"
+	vagrant ssh -c "/vagrant/scripts/vagrant/h2test.sh"
+
+unittest: vgup
+	vagrant ssh -c "/vagrant/scripts/vagrant/unittest.sh"
+
+simple: vgup
+	vagrant ssh -c "java -jar /usr/local/lib/simple.jar /vagrant"
 
 integration-test: pgtest h2test
