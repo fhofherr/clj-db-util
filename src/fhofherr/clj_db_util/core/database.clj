@@ -6,6 +6,7 @@
 (defrecord Database [^DataSource datasource
                      ^String db-resource-path
                      ^String schema
+                     ^String vendor
                      ^Flyway migrator])
 
 (alter-meta! #'->Database assoc :no-doc true)
