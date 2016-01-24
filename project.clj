@@ -22,6 +22,7 @@
                                      :exclusions [org.clojure/clojure]]
                                     [org.clojure/tools.namespace "0.2.10"]
                                     [org.slf4j/slf4j-api "1.7.13"]
-                                    [org.slf4j/slf4j-nop "1.7.13"]]}
+                                    [org.slf4j/slf4j-nop "1.7.13"]
+                                    [com.h2database/h2 "1.4.190"]]}
               :postgres {:dependencies [[org.postgresql/postgresql "9.4-1206-jdbc42"]]}
               :h2 {:dependencies [[com.h2database/h2 "1.4.190"]]}})

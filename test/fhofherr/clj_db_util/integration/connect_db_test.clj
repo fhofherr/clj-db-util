@@ -8,4 +8,7 @@
         user (env :db-user)
         password (env :db-pass)
         db (db-util/connect-db url user password)]
-    (is (true? (db-util/verify-connection db)))))
+    (try
+      (is (true? (db-util/verify-connection db)))
+      (finally
+        (db-util/close-db db)))))
