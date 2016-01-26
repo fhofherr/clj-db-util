@@ -1,5 +1,8 @@
 #!/bin/bash
 
+cd /vagrant
+CUR_HASH=$(git rev-parse HEAD)
+
 if [ -z "$WORKSPACE" ]
 then
     WORKSPACE="/tmp/clj-db-util/h2test"
@@ -12,7 +15,8 @@ then
 fi
 
 cd $WORKSPACE/clj-db-util
-git pull
+git fetch -p
+git reset --hard $CUR_HASH
 
 source /vagrant/scripts/vagrant/h2_env.sh
 lein with-profile +h2 test :integration
