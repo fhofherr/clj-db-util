@@ -1,23 +1,23 @@
 (ns fhofherr.clj-db-util.test.core.database-test
   (:require [clojure.test :refer :all]
-            [fhofherr.clj-db-util.core.database :as database]))
+            [fhofherr.clj-db-util.core :as db-util]))
 
 (deftest database-resource-locations
 
   (testing "default locations"
-    (let [db (database/new-database "jdbc:h2:mem:" "" "")]
+    (let [db (db-util/connect-to-db "jdbc:h2:mem:" "" "")]
       (try
-        (is (= "classpath:/db/h2/default/migrations" (database/migrations-loc db)))
-        (is (= "classpath:/db/h2/default/statements" (database/statements-loc db)))
+        (is (= "classpath:/db/h2/default/migrations" (db-util/migrations-loc db)))
+        (is (= "classpath:/db/h2/default/statements" (db-util/statements-loc db)))
         (finally
-          (database/close db)))))
+          (db-util/disconnect-from-db db)))))
 
   (testing "custom resource path"
     (let [custom-path "classpath:/clj-db-util/test/db"
-          db (-> (database/new-database "jdbc:h2:mem:" "" "")
+          db (-> (db-util/connect-to-db "jdbc:h2:mem:" "" "")
                  (assoc :db-resource-path custom-path))]
       (try
-        (is (= (str custom-path "/h2/default/migrations") (database/migrations-loc db)))
-        (is (= (str custom-path "/h2/default/statements") (database/statements-loc db)))
+        (is (= (str custom-path "/h2/default/migrations") (db-util/migrations-loc db)))
+        (is (= (str custom-path "/h2/default/statements") (db-util/statements-loc db)))
         (finally
-          (database/close db))))))
+          (db-util/disconnect-from-db db))))))

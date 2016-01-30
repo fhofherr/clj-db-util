@@ -7,8 +7,8 @@
   (let [url (env :db-url)
         user (env :db-user)
         password (env :db-pass)
-        db (db-util/connect-db url user password)]
+        db (db-util/connect-to-db url user password)]
     (try
       (is (true? (db-util/verify-connection db)))
       (finally
-        (db-util/close-db db)))))
+        (db-util/disconnect-from-db db)))))

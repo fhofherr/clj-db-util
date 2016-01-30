@@ -21,7 +21,7 @@
 
 #_(deftest ^:integration simple-insert-update-delete
 
-  (let [db (-> (db-util/connect-db (env :db-url) (env :db-user) (env :db-pass))
+  (let [db (-> (db-util/connect-to-db (env :db-url) (env :db-user) (env :db-pass))
                (db-util/add-migrator))]
 
     (testing "one transaction per operation"
