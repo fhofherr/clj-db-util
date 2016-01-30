@@ -58,9 +58,22 @@
   (db-util/with-database
     [db (db-util/connect-to-db "jdbc:h2:mem:" "" "")]
 
-    (testing "chain transactional operations"
+    (testing "chain two transactional operations"
       (let [tx-op1 (db-util/transactional [:tx-op-1])
-            tx-op2 (db-util/transactional-bind tx-op1 #(db-util/transactional (conj % :tx-op-2)))
+            tx-op2 (db-util/transactional-bind tx-op1 (fn [x] (db-util/transactional (conj x :tx-op-2))))
             [res err] (db-util/with-db-transaction db tx-op2)]
         (is (= [:tx-op-1 :tx-op-2] res))
+        (is (nil? err))))))
+
+(deftest transactional-let
+  (db-util/with-database
+    [db (db-util/connect-to-db "jdbc:h2:mem:" "" "")]
+
+    (testing "chain multiple transactional operations"
+      (let [chained-op (db-util/transactional-let [x (db-util/transactional [:x])
+                                                   y (db-util/transactional (conj x :y))
+                                                   z (db-util/transactional (conj y :z))]
+                                                  z)
+            [res err] (db-util/with-db-transaction db chained-op)]
+        (is (= [:x :y :z] res))
         (is (nil? err))))))

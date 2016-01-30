@@ -153,15 +153,33 @@
   `(transactional-operation [tx-state#] [~form tx-state#]))
 
 (defn transactional-bind
-  [tx-op f]
+  [tx-op tx-op-factory]
   (transactional-operation
-    [tx-state]
-    (let [[res next-tx-state] (tx-op tx-state)
-          next-tx-op (f res)]
-      (next-tx-op next-tx-state))))
+   [tx-state]
+   (let [[res next-tx-state] (tx-op tx-state)
+         next-tx-op (tx-op-factory res)]
+     (next-tx-op next-tx-state))))
+
+(defn- emit-tx-op-factory
+  [bnd tx-op]
+  `(fn [~bnd] ~tx-op))
 
 (defmacro transactional-let
-  [bindings & body])
+  [bindings & body]
+  {:pre [(not-empty bindings) (even? (count bindings)) (not-empty body)]}
+  (let [emit-binding-op-factoy (fn [[tx-op op-factory] [bnd-sym prev-tx-op]]
+                                 (let [prev-op-factory (emit-tx-op-factory bnd-sym
+                                                                           `(transactional-bind ~tx-op ~op-factory))]
+                                   [prev-tx-op prev-op-factory]))
+        reversed-bindings (->> bindings
+                               (partition 2)
+                               (reverse))
+        [innermost-bnd-sym innermost-tx-op] (first reversed-bindings)
+        innermost-op-factory (emit-tx-op-factory innermost-bnd-sym `(transactional ~@body))
+        [outermost-tx-op outermost-op-factory] (reduce emit-binding-op-factoy
+                                                       [innermost-tx-op innermost-op-factory]
+                                                       (rest reversed-bindings))]
+    `(transactional-bind ~outermost-tx-op ~outermost-op-factory)))
 
 (defn insert!
   [table & records])
@@ -176,7 +194,7 @@
   []
   ;TODO rollback the transaction.
   ;TODO transactional-operation must not execute if tx-state is rollback-only? (add test for this)
-  )
+)
 
 (defn with-db-transaction
   [db tx-op]
