@@ -53,3 +53,14 @@
         (let [[res err] (db-util/with-db-transaction db tx-op)]
           (is (= 2 @something))
           (is (nil? err)))))))
+
+(deftest transactional-bind
+  (db-util/with-database
+    [db (db-util/connect-to-db "jdbc:h2:mem:" "" "")]
+
+    (testing "chain transactional operations"
+      (let [tx-op1 (db-util/transactional [:tx-op-1])
+            tx-op2 (db-util/transactional-bind tx-op1 #(db-util/transactional (conj % :tx-op-2)))
+            [res err] (db-util/with-db-transaction db tx-op2)]
+        (is (= [:tx-op-1 :tx-op-2] res))
+        (is (nil? err))))))

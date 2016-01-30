@@ -127,7 +127,7 @@
 
 (defn set-rollback-only!
   [{:keys [t-con] :as tx-state}]
-  {:pre [t-con]}
+  {:pre [t-con (transaction-state? tx-state)]}
   (jdbc/db-set-rollback-only! t-con)
   tx-state)
 
@@ -151,6 +151,14 @@
 (defmacro transactional
   [form]
   `(transactional-operation [tx-state#] [~form tx-state#]))
+
+(defn transactional-bind
+  [tx-op f]
+  (transactional-operation
+    [tx-state]
+    (let [[res next-tx-state] (tx-op tx-state)
+          next-tx-op (f res)]
+      (next-tx-op next-tx-state))))
 
 (defmacro transactional-let
   [bindings & body])
