@@ -144,7 +144,7 @@
   `(fn [~tx-state-bnd]
      {:post [(sequential? ~'%) (transaction-state? (second ~'%))]}
      (try
-       ~@body
+       (io! ~@body)
        (catch Exception ex#
          (*exception-during-transaction* ~tx-state-bnd ex#)))))
 
@@ -166,10 +166,11 @@
 
 (defn with-db-transaction
   [db tx-op]
-  (jdbc/with-db-transaction
-    [t-con (db-spec db)]
-    (let [tx-state (map->TransactionState {:t-con t-con})
-          [tx-result final-tx-state] (tx-op tx-state)]
-      (if (rollback-only? final-tx-state)
-        [tx-result err-transaction-rolled-back]
-        [tx-result nil]))))
+  (io!
+   (jdbc/with-db-transaction
+     [t-con (db-spec db)]
+     (let [tx-state (map->TransactionState {:t-con t-con})
+           [tx-result final-tx-state] (tx-op tx-state)]
+       (if (rollback-only? final-tx-state)
+         [tx-result err-transaction-rolled-back]
+         [tx-result nil])))))
