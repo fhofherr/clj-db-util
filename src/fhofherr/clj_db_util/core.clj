@@ -172,6 +172,12 @@
 (defn query-str
   [stmt-str])
 
+(defn rollback!
+  []
+  ;TODO rollback the transaction.
+  ;TODO transactional-operation must not execute if tx-state is rollback-only? (add test for this)
+  )
+
 (defn with-db-transaction
   [db tx-op]
   (io!
