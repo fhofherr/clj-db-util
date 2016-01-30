@@ -143,7 +143,7 @@
 
 (defmacro transactional-operation
   [[tx-state-bnd] & body]
-  {:pre [(symbol? tx-state-bnd)]}
+  {:pre [(symbol? tx-state-bnd) (not-empty body)]}
   ;; TODO add meta data identifying the function as transactional operation?
   `(fn [~tx-state-bnd]
      {:post [(sequential? ~'%) (transaction-state? (second ~'%))]}
@@ -186,13 +186,30 @@
     `(transactional-bind ~outermost-tx-op ~outermost-op-factory)))
 
 (defn insert!
-  [table & records])
+  [table & records]
+  {:pre [table (not-empty records)]}
+  (transactional-operation
+    [tx-state]
+    ;; TODO properly extract generated keys based on database vendor
+    ;; TODO not every database returns the generated keys
+    ;; TODO batch insert returns a seq containing the number of affected rows => sum it up
+      (let [_ (apply jdbc/insert! (:t-con tx-state) table records)]
+        [1 tx-state])))
 
 (defn delete!
-  [table condition])
+  [table condition]
+  (transactional-operation
+    [tx-state]
+    ;; TODO see TODOs for handling inserted rows
+    (let [_ (jdbc/delete! (:t-con tx-state) table condition)]
+      [1 tx-state])))
 
 (defn query-str
-  [stmt-str])
+  [stmt-str]
+  (transactional-operation
+    [tx-state]
+    (let [res (jdbc/query (:t-con tx-state) [stmt-str])]
+      [res tx-state])))
 
 (defn rollback!
   []
