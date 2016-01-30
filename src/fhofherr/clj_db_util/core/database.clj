@@ -82,3 +82,8 @@
 (defn clean
   [{:keys [migrator]}]
   (.clean migrator))
+
+(defn db-spec
+  [{:keys [datasource]}]
+  {:pre [datasource]}
+  {:datasource datasource})

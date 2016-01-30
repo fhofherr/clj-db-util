@@ -3,23 +3,23 @@
             [environ.core :refer [env]]
             [fhofherr.clj-db-util.core :as db-util]))
 
-(defn insert-key-value-pair
+#_(defn insert-key-value-pair
   []
   (db-util/transactional-let [value (db-util/transactional "value")
                               inserted-rows (db-util/insert! :t-key-value-pairs {:key "key" :value value})]
     inserted-rows))
 
-(defn read-key-value-pair
+#_(defn read-key-value-pair
   []
   (db-util/transactional-let [query-result (db-util/query-str
                                              "SELECT key, value FROM t_key_value_pairs WHERE key = 'value'")]
     query-result))
 
-(defn delete-key-value-pair
+#_(defn delete-key-value-pair
   []
   (db-util/transactional-let [deleted-rows (db-util/delete! :t-key-value-pairs ["key = 'value'"])]))
 
-(deftest ^:integration simple-insert-update-delete
+#_(deftest ^:integration simple-insert-update-delete
 
   (let [db (-> (db-util/connect-db (env :db-url) (env :db-user) (env :db-pass))
                (db-util/add-migrator))]

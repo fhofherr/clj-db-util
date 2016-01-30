@@ -54,3 +54,12 @@
 
 (defn with-db-transaction
   [txop db])
+
+(defmacro with-database
+  [[db-sym connect-expr :as bnd] & body]
+  {:pre [(symbol? db-sym) connect-expr]}
+  `(let ~bnd
+     (try
+       ~@body
+       (finally
+         (close-db ~db-sym)))))
