@@ -9,7 +9,7 @@
 
     (testing "execute the body of the transactional op"
       (let [body-res (+ 1 1)
-            tx-op (db-util/transactional-operation [tx-state] (+ 1 1))
+            tx-op (db-util/transactional-operation [tx-state] [(+ 1 1) tx-state])
             [res err] (db-util/with-db-transaction db tx-op)]
         (is (= res body-res))
         (is (nil? err))))

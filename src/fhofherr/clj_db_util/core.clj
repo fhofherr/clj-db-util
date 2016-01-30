@@ -142,15 +142,15 @@
   {:pre [(symbol? tx-state-bnd)]}
   ;; TODO add meta data identifying the function as transactional operation?
   `(fn [~tx-state-bnd]
+     {:post [(sequential? ~'%) (transaction-state? (second ~'%))]}
      (try
-       (let [res# ~@body]
-         [res# ~tx-state-bnd])
+       ~@body
        (catch Exception ex#
          (*exception-during-transaction* ~tx-state-bnd ex#)))))
 
 (defmacro transactional
   [form]
-  `(transactional-operation [tx-state#] ~form))
+  `(transactional-operation [tx-state#] [~form tx-state#]))
 
 (defmacro transactional-let
   [bindings & body])
