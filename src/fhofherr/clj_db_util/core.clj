@@ -14,6 +14,10 @@
 (alter-meta! #'->Database assoc :no-doc true)
 (alter-meta! #'map->Database assoc :no-doc true)
 
+(defn database?
+  [db]
+  (instance? Database db))
+
 (defn migrations-loc [{:keys [db-resource-path schema vendor]}]
   {:pre [db-resource-path schema vendor]}
   (format "%s/%s/%s/migrations" db-resource-path (name vendor) schema))
@@ -198,6 +202,7 @@
 
 (defn with-db-transaction
   [db tx-op]
+  {:pre [(database? db)]}
   (io!
    (jdbc/with-db-transaction
      [t-con (db-spec db)]

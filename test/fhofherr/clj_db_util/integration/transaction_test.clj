@@ -3,39 +3,42 @@
             [environ.core :refer [env]]
             [fhofherr.clj-db-util.core :as db-util]))
 
-#_(defn insert-key-value-pair
-  []
+(def insert-key-value-pair
   (db-util/transactional-let [value (db-util/transactional "value")
                               inserted-rows (db-util/insert! :t-key-value-pairs {:key "key" :value value})]
-    inserted-rows))
+                             inserted-rows))
 
-#_(defn read-key-value-pair
-  []
+(def read-key-value-pair
   (db-util/transactional-let [query-result (db-util/query-str
-                                             "SELECT key, value FROM t_key_value_pairs WHERE key = 'value'")]
-    query-result))
+                                            "SELECT key, value FROM t_key_value_pairs WHERE key = 'value'")]
+                             query-result))
 
-#_(defn delete-key-value-pair
-  []
-  (db-util/transactional-let [deleted-rows (db-util/delete! :t-key-value-pairs ["key = 'value'"])]))
+(def delete-key-value-pair
+  (db-util/transactional-let [deleted-rows (db-util/delete! :t-key-value-pairs ["key = 'value'"])]
+                             deleted-rows))
 
-#_(deftest ^:integration simple-insert-update-delete
+(deftest ^:integration simple-insert-update-delete
 
-  (let [db (-> (db-util/connect-to-db (env :db-url) (env :db-user) (env :db-pass))
-               (db-util/add-migrator))]
+  (db-util/with-database
+    [db (db-util/connect-to-db (env :db-url) (env :db-user) (env :db-pass))]
 
     (testing "one transaction per operation"
       (try
         ;; TODO add possibility to specify target version
         (db-util/migrate-db db)
-        (let [inserted-rows (db-util/with-db-transaction (insert-key-value-pair) db)
-              query-result-1 (db-util/with-db-transaction (read-key-value-pair) db)
-              deleted-rows (db-util/with-db-transaction (delete-key-value-pair) db)
-              query-result-2 (db-util/with-db-transaction (read-key-value-pair) db)]
+
+        (println db)
+
+        (let [[inserted-rows err1] (db-util/with-db-transaction db insert-key-value-pair)
+              [query-result-1 err2] (db-util/with-db-transaction db read-key-value-pair)
+              [deleted-rows err3] (db-util/with-db-transaction db delete-key-value-pair)
+              [query-result-2 err4] (db-util/with-db-transaction db read-key-value-pair)]
           (is (= 1 inserted-rows))
           (is (= [{:key "key" :value "value"}] query-result-1))
           (is (= 1 deleted-rows))
-          (is (= [] query-result-2)))
+          (is (= [] query-result-2))
+          (is (every? nil? [err1 err2 err3 err4])))
+
         (finally
           ;; TODO enable selection between truncating tables and wiping the whole schema
           (db-util/clean-db db))))
@@ -43,11 +46,13 @@
     (testing "chain multiple transactional operations"
       (try
         (db-util/migrate-db db)
-        (let [chained (fn []
-                        (db-util/transactional-let [_ (insert-key-value-pair)
-                                                    query-result (read-key-value-pair)]
-                                                   query-result))
-              query-result (db-util/with-db-transaction (chained) db)]
-          (is (= [{:key "key" :value "value"}] query-result-1)))
+
+        (let [chained (db-util/transactional-let [_ insert-key-value-pair
+                                                  query-result read-key-value-pair]
+                                                 query-result)
+              [query-result err] (db-util/with-db-transaction db chained)]
+          (is (= [{:key "key" :value "value"}] query-result))
+          (is (nil? err)))
+
         (finally
           (db-util/clean-db db))))))
