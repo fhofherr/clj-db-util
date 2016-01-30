@@ -34,3 +34,22 @@
             (is (= (second @handler-args) exception))
             (is (= "new-result" res))
             (is (nil? err))))))))
+
+(deftest transactional
+  (db-util/with-database
+    [db (db-util/connect-to-db "jdbc:h2:mem:" "" "")]
+
+    (testing "wraps a form into a transactional operation"
+      (let [something "something"
+            tx-op (db-util/transactional something)
+            [res err] (db-util/with-db-transaction db tx-op)]
+        (is (= something res))
+        (is (nil? err))))
+
+    (testing "the form is only evaluated within a transaction"
+      (let [something (atom 1)
+            tx-op (db-util/transactional (swap! something inc))]
+        (is (= 1 @something))
+        (let [[res err] (db-util/with-db-transaction db tx-op)]
+          (is (= 2 @something))
+          (is (nil? err)))))))

@@ -148,8 +148,9 @@
        (catch Exception ex#
          (*exception-during-transaction* ~tx-state-bnd ex#)))))
 
-(defn transactional
-  [value])
+(defmacro transactional
+  [form]
+  `(transactional-operation [tx-state#] ~form))
 
 (defmacro transactional-let
   [bindings & body])
