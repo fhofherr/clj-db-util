@@ -15,7 +15,7 @@
         (is (nil? err))))
 
     (testing "rollback the transaction if an Exception occurs"
-      (let [tx-op (db-util/transactional-operation [tx-state] (throw (Exception.)))
+      (let [tx-op (db-util/transactional-operation [tx-state] (throw (Exception. "Kaboom, Baby!")))
             [res err] (db-util/with-db-transaction db tx-op)]
         (is (nil? res))
         (is (= db-util/err-transaction-rolled-back err))))
