@@ -3,7 +3,8 @@
             [clojure.tools.logging :as log])
   (:import (javax.sql DataSource)
            (org.flywaydb.core Flyway)
-           (com.zaxxer.hikari HikariDataSource HikariConfig)))
+           (com.zaxxer.hikari HikariDataSource HikariConfig)
+           (org.flywaydb.core.api MigrationInfoService)))
 
 (defrecord Database [^DataSource datasource
                      ^String db-resource-path
@@ -64,7 +65,7 @@
           (map->Database)
           (add-migrator)))))
 
-(defn disconnect-from-db [{:keys [datasource]}]
+(defn disconnect-from-db [{:keys [^HikariDataSource datasource]}]
   {:pre [datasource]}
   (.close datasource))
 
@@ -86,8 +87,8 @@
       (finally
         (.close c)))))
 
-(defn db-info
-  [{:keys [migrator]}]
+(defn ^MigrationInfoService db-info
+  [{:keys [^Flyway migrator]}]
   {:pre [migrator]}
   (.info migrator))
 
@@ -100,13 +101,13 @@
           (.getVersion)))
 
 (defn migrate-db
-  [{:keys [migrator] :as db}]
+  [{:keys [^Flyway migrator] :as db}]
   {:pre [migrator]}
   (.migrate migrator)
   (db-version db))
 
 (defn clean-db
-  [{:keys [migrator]}]
+  [{:keys [^Flyway migrator]}]
   (.clean migrator))
 
 (defn db-spec
