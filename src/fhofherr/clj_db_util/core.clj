@@ -148,10 +148,13 @@
   ;; TODO add meta data identifying the function as transactional operation?
   `(fn [~tx-state-bnd]
      {:post [(sequential? ~'%) (transaction-state? (second ~'%))]}
-     (try
-       (io! ~@body)
-       (catch Exception ex#
-         (*exception-during-transaction* ~tx-state-bnd ex#)))))
+     (let [tx-state# ~tx-state-bnd]
+       (try
+         (if (rollback-only? tx-state#)
+           [nil tx-state#]
+           (io! ~@body))
+         (catch Exception ex#
+           (*exception-during-transaction* tx-state# ex#))))))
 
 (defmacro transactional
   [form]
@@ -214,9 +217,9 @@
 
 (defn rollback!
   []
-  ;TODO rollback the transaction.
-  ;TODO transactional-operation must not execute if tx-state is rollback-only? (add test for this)
-)
+  (transactional-operation
+    [tx-state]
+    [nil (set-rollback-only! tx-state)]))
 
 (defn with-db-transaction
   [db tx-op]

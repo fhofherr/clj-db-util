@@ -20,6 +20,14 @@
         (is (nil? res))
         (is (= db-util/err-transaction-rolled-back err))))
 
+    (testing "transactional operations don't execute if transaction is rolled back"
+      (let [value (atom :unchanged)
+            rollback (db-util/rollback!)
+            does-nothing (db-util/transactional (reset! value :changed))
+            [_ err] (db-util/with-db-transaction db (db-util/transactional-bind rollback (fn [_] does-nothing)))]
+        (is (= db-util/err-transaction-rolled-back))
+        (is (= :unchanged @value))))
+
     (testing "call the *exception-during-transaction* handler"
       (let [handler-args (atom nil)
             handler (fn [tx-state e]

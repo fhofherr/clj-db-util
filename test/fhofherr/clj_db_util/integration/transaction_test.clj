@@ -46,4 +46,19 @@
                                                query-result)
             [query-result err] (db-util/with-db-transaction db chained)]
         (is (= [{:key "key" :value "value"}] query-result))
-        (is (nil? err))))))
+        (is (nil? err))))
+
+    (testing "rollback"
+      (db-util/clean-db db)
+      (db-util/migrate-db db)
+
+      (let [[no-result err1] (db-util/with-db-transaction db (db-util/transactional-let [_ insert-key-value-pair
+                                                                                         _ (db-util/rollback!)]
+                                                                                        nil))
+            [query-result err2] (db-util/with-db-transaction db read-key-value-pair)]
+
+        (is (nil? no-result))
+        (is (= db-util/err-transaction-rolled-back err1))
+        (is (nil? err2))
+        (is (empty? query-result))))
+    ))
