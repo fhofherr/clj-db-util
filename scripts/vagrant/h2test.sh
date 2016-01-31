@@ -19,4 +19,4 @@ git fetch -p
 git reset --hard $CUR_HASH
 
 source /vagrant/scripts/vagrant/h2_env.sh
-lein with-profile +h2 test :integration
+lein with-profile +h2 test :default :integration

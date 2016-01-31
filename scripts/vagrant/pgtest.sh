@@ -19,4 +19,4 @@ git fetch -p
 git reset --hard $CUR_HASH
 
 source /vagrant/scripts/vagrant/pg_env.sh
-lein with-profile +postgres test :integration
+lein with-profile +postgres test :default :integration
