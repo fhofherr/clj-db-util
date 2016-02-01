@@ -213,6 +213,9 @@
     (let [res (jdbc/query (:t-con tx-state) [stmt-str])]
       [res tx-state])))
 
+;; TODO execute!
+;; TODO call stored procedure for databases that support id
+
 (defn rollback!
   []
   (transactional-operation
