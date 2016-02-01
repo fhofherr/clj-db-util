@@ -27,13 +27,13 @@
       ;; TODO add possibility to specify target version
       (db-util/migrate-db db)
 
-      (let [[inserted-rows err1] (db-util/with-db-transaction db insert-key-value-pair)
+      (let [[vendor-specific err1] (db-util/with-db-transaction db insert-key-value-pair)
             [query-result-1 err2] (db-util/with-db-transaction db read-key-value-pair)
             [deleted-rows err3] (db-util/with-db-transaction db delete-key-value-pair)
             [query-result-2 err4] (db-util/with-db-transaction db read-key-value-pair)]
-        (is (= 1 inserted-rows))
+        (is ((complement nil?) vendor-specific))
         (is (= [{:key "key" :value "value"}] query-result-1))
-        (is (= 1 deleted-rows))
+        (is (= [1] deleted-rows))
         (is (empty? query-result-2))
         (is (every? nil? [err1 err2 err3 err4]))))
 

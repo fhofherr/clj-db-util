@@ -194,19 +194,17 @@
   {:pre [table (not-empty records)]}
   (transactional-operation
     [tx-state]
-    ;; TODO properly extract generated keys based on database vendor
-    ;; TODO not every database returns the generated keys
     ;; TODO batch insert returns a seq containing the number of affected rows => sum it up
-      (let [_ (apply jdbc/insert! (:t-con tx-state) table records)]
-        [1 tx-state])))
+      (let [res (apply jdbc/insert! (:t-con tx-state) table records)]
+        [res tx-state])))
 
 (defn delete!
   [table condition]
   (transactional-operation
     [tx-state]
     ;; TODO see TODOs for handling inserted rows
-    (let [_ (jdbc/delete! (:t-con tx-state) table condition)]
-      [1 tx-state])))
+    (let [res (jdbc/delete! (:t-con tx-state) table condition)]
+      [res tx-state])))
 
 (defn query-str
   [stmt-str]
