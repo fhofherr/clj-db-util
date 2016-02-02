@@ -214,14 +214,21 @@
      [res tx-state])))
 
 (defn query-str
-  [stmt-str]
+  [sql]
   (transactional-operation
    [tx-state]
-   (let [res (jdbc/query (:t-con tx-state) [stmt-str])]
+   (let [res (jdbc/query (:t-con tx-state) [sql])]
      [res tx-state])))
 
-;; TODO execute!
-;; TODO call stored procedure for databases that support id
+(defn execute-str!
+  [sql sql-params]
+  (transactional-operation
+    [tx-state]
+    (let [sql-with-params (concat [sql] sql-params)
+          [res] (jdbc/execute! (:t-con tx-state) sql-with-params)]
+      [res tx-state])))
+
+;; TODO call stored procedure for databases that support it
 
 (defn rollback!
   []
