@@ -48,7 +48,19 @@
   (db-util/with-database
     [db (db-util/connect-to-db (env :db-url) (env :db-user) (env :db-pass))]
 
-    (testing "basic update"
+    (testing "unconditional update"
+      (db-util/clean-db db)
+      (db-util/migrate-db db)
+
+      (let [update (db-util/update! :t_key_value_pairs {:value "another value"})
+            [_ err1] (db-util/with-db-transaction db insert)
+            [n-updated err2] (db-util/with-db-transaction db update)
+            [res err3] (db-util/with-db-transaction db select)]
+        (is (every? nil? [err1 err2 err3]))
+        (is (= 1 n-updated))
+        (is (= [{:key "key" :value "another value"}] res))))
+
+    (testing "update with where clause"
       (db-util/clean-db db)
       (db-util/migrate-db db)
 
@@ -80,7 +92,7 @@
       (db-util/clean-db db)
       (db-util/migrate-db db)
 
-      (let [delete (db-util/delete! :t_key_value_pairs [])
+      (let [delete (db-util/delete! :t_key_value_pairs)
             [_ err1] (db-util/with-db-transaction db insert)
             [n-deleted err2] (db-util/with-db-transaction db delete)
             [res err3] (db-util/with-db-transaction db select)]
@@ -118,8 +130,7 @@
       (db-util/clean-db db)
       (db-util/migrate-db db)
 
-      (let [execute-insert (db-util/execute-str! "INSERT INTO t_key_value_pairs (key, value) values ('key', 'value')"
-                                                 [])
+      (let [execute-insert (db-util/execute-str! "INSERT INTO t_key_value_pairs (key, value) values ('key', 'value')")
             [n-inserted err1] (db-util/with-db-transaction db execute-insert)
             [res err2] (db-util/with-db-transaction db select)]
         (is (every? nil? [err1 err2]))

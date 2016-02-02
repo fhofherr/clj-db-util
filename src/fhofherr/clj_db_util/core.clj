@@ -199,19 +199,23 @@
      [res tx-state])))
 
 (defn update!
-  [table value where-clause]
-  {:pre [table value]}
-  (transactional-operation
-   [tx-state]
-   (let [[res] (jdbc/update! (:t-con tx-state) table value where-clause)]
-     [res tx-state])))
+  ([table value]
+    (update! table value nil))
+  ([table value where-clause]
+   {:pre [table value]}
+   (transactional-operation
+     [tx-state]
+     (let [[res] (jdbc/update! (:t-con tx-state) table value (seq where-clause))]
+       [res tx-state]))))
 
 (defn delete!
-  [table where-clause]
-  (transactional-operation
-   [tx-state]
-   (let [[res] (jdbc/delete! (:t-con tx-state) table where-clause)]
-     [res tx-state])))
+  ([table]
+    (delete! table nil))
+  ([table where-clause]
+   (transactional-operation
+     [tx-state]
+     (let [[res] (jdbc/delete! (:t-con tx-state) table (seq where-clause))]
+       [res tx-state]))))
 
 (defn query-str
   [sql]
@@ -221,12 +225,14 @@
      [res tx-state])))
 
 (defn execute-str!
-  [sql sql-params]
-  (transactional-operation
-    [tx-state]
-    (let [sql-with-params (concat [sql] sql-params)
-          [res] (jdbc/execute! (:t-con tx-state) sql-with-params)]
-      [res tx-state])))
+  ([sql]
+    (execute-str! sql nil))
+  ([sql sql-params]
+   (transactional-operation
+     [tx-state]
+     (let [sql-with-params (concat [sql] (seq sql-params))
+           [res] (jdbc/execute! (:t-con tx-state) sql-with-params)]
+       [res tx-state]))))
 
 ;; TODO call stored procedure for databases that support it
 
