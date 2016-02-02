@@ -218,11 +218,14 @@
        [res tx-state]))))
 
 (defn query-str
-  [sql]
-  (transactional-operation
-   [tx-state]
-   (let [res (jdbc/query (:t-con tx-state) [sql])]
-     [res tx-state])))
+  ([sql]
+    (query-str sql nil))
+  ([sql sql-params]
+   (transactional-operation
+     [tx-state]
+     (let [sql-with-params (concat [sql] (seq sql-params))
+           res (jdbc/query (:t-con tx-state) sql-with-params)]
+       [res tx-state]))))
 
 (defn execute-str!
   ([sql]
