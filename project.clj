@@ -15,7 +15,7 @@
                    :integration :integration}
   :profiles  {:dev  {:source-paths ["dev"]
                      :resource-paths ["test-resources"]
-                     :plugins [[codox "0.9.1"]
+                     :plugins [[lein-codox "0.9.1"]
                                [lein-cljfmt "0.3.0"]
                                [lein-cloverage "1.0.6"]]
                      :codox {:namespaces [#"^fhofherr\.clj-db-util\."]
