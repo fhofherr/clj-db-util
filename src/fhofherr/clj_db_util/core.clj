@@ -139,6 +139,7 @@
 (defn ^:dynamic *exception-during-transaction*
   [tx-state ^Exception ex]
   (log/warn ex "Exception occured during transaction")
+  ;; TODO repeatedly call and log getNextException (if possible) (see java.sql.BatchUpdateException)
   (let [rolled-back (set-rollback-only! tx-state)]
     [nil rolled-back]))
 
@@ -197,6 +198,14 @@
     ;; TODO batch insert returns a seq containing the number of affected rows => sum it up
       (let [res (apply jdbc/insert! (:t-con tx-state) table records)]
         [res tx-state])))
+
+(defn update!
+  [table value & conditions]
+  {:pre [table value]}
+  (transactional-operation
+    [tx-state]
+    (let [[res] (apply jdbc/update! (:t-con tx-state) table value conditions)]
+      [res tx-state])))
 
 (defn delete!
   [table condition]
