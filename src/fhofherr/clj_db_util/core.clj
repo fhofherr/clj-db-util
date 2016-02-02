@@ -237,8 +237,6 @@
            [res] (jdbc/execute! (:t-con tx-state) sql-with-params)]
        [res tx-state]))))
 
-;; TODO call stored procedure for databases that support it
-
 (defn rollback!
   []
   (transactional-operation
