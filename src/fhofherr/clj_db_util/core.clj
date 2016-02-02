@@ -4,12 +4,13 @@
   (:import (javax.sql DataSource)
            (org.flywaydb.core Flyway)
            (com.zaxxer.hikari HikariDataSource HikariConfig)
-           (org.flywaydb.core.api MigrationInfoService)))
+           (org.flywaydb.core.api MigrationInfoService)
+           (clojure.lang Keyword)))
 
 (defrecord Database [^DataSource datasource
                      ^String db-resource-path
                      ^String schema
-                     ^String vendor
+                     ^Keyword vendor
                      ^Flyway migrator])
 
 (alter-meta! #'->Database assoc :no-doc true)
