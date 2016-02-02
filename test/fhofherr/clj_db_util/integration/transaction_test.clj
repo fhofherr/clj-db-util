@@ -33,7 +33,7 @@
             [query-result-2 err4] (db-util/with-db-transaction db read-key-value-pair)]
         (is ((complement nil?) vendor-specific))
         (is (= [{:key "key" :value "value"}] query-result-1))
-        (is (= [1] deleted-rows))
+        (is (= 1 deleted-rows))
         (is (empty? query-result-2))
         (is (every? nil? [err1 err2 err3 err4]))))
 

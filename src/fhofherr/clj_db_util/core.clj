@@ -194,33 +194,31 @@
   [table & records]
   {:pre [table (not-empty records)]}
   (transactional-operation
-    [tx-state]
-    ;; TODO batch insert returns a seq containing the number of affected rows => sum it up
-      (let [res (apply jdbc/insert! (:t-con tx-state) table records)]
-        [res tx-state])))
+   [tx-state]
+   (let [res (apply jdbc/insert! (:t-con tx-state) table records)]
+     [res tx-state])))
 
 (defn update!
-  [table value & conditions]
+  [table value where-clause]
   {:pre [table value]}
   (transactional-operation
-    [tx-state]
-    (let [[res] (apply jdbc/update! (:t-con tx-state) table value conditions)]
-      [res tx-state])))
+   [tx-state]
+   (let [[res] (jdbc/update! (:t-con tx-state) table value where-clause)]
+     [res tx-state])))
 
 (defn delete!
-  [table condition]
+  [table where-clause]
   (transactional-operation
-    [tx-state]
-    ;; TODO see TODOs for handling inserted rows
-    (let [res (jdbc/delete! (:t-con tx-state) table condition)]
-      [res tx-state])))
+   [tx-state]
+   (let [[res] (jdbc/delete! (:t-con tx-state) table where-clause)]
+     [res tx-state])))
 
 (defn query-str
   [stmt-str]
   (transactional-operation
-    [tx-state]
-    (let [res (jdbc/query (:t-con tx-state) [stmt-str])]
-      [res tx-state])))
+   [tx-state]
+   (let [res (jdbc/query (:t-con tx-state) [stmt-str])]
+     [res tx-state])))
 
 ;; TODO execute!
 ;; TODO call stored procedure for databases that support id
@@ -228,8 +226,8 @@
 (defn rollback!
   []
   (transactional-operation
-    [tx-state]
-    [nil (set-rollback-only! tx-state)]))
+   [tx-state]
+   [nil (set-rollback-only! tx-state)]))
 
 (defn with-db-transaction
   [db tx-op]
