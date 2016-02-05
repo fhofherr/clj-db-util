@@ -21,8 +21,18 @@
       (-> parse
           (assoc :input (seq rest-input))
           (assoc :accept-fn next-accept-fn)
-          (update :parse-result #(conj (vec %)
-                                       (token tok-kw parse-result)))))))
+          (update :parse-result #(if (seq parse-result)
+                                  (conj (vec %) (token tok-kw parse-result))
+                                  %))))))
+
+(def accept-start (accept :start
+                          (fn [input] [nil input])
+                          #(when-let [rest-in (seq %)]
+                            (let [c (first rest-in)]
+                              (cond
+                                (= \: c) accept-named-parameter
+                                (whitespace? c) accept-whitespace
+                                :else accept-any-token)))))
 
 (def accept-whitespace (accept :whitespace
                                #(split-with whitespace? %)
@@ -39,7 +49,7 @@
                                       (let [[result rest-in] (->> input
                                                                   (rest)
                                                                   (split-with (complement whitespace?)))]
-                                        [(cons \: result) rest-in]))]
+                                        [result rest-in]))]
                               (accept :named-param
                                       consume-named-param
                                       #(when (seq %) accept-whitespace))))
@@ -58,8 +68,14 @@
 
 (defn parse-sql-str
   [sql-str]
-  (let [res (trampoline apply-accept-fn (-> sql-str
+  (let [parse-result (trampoline apply-accept-fn (-> sql-str
                                             (init-parse)
-                                            (assoc :accept-fn accept-any-token)))]
-    {:sql-str (string/join "" (map second res))
-     :params  []}))
+                                            (assoc :accept-fn accept-start)))
+        [sql-str params] (reduce (fn [[ss ps] [tok-kw tok-v]]
+                                   (if (= :named-param tok-kw)
+                                     [(conj ss "?") (conj ps (keyword tok-v))]
+                                     [(conj ss tok-v) ps]))
+                                 [[] []]
+                                 parse-result)]
+    {:sql-str (string/join "" sql-str)
+     :params  params}))

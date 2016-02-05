@@ -4,20 +4,20 @@
 
 (deftest parse-sql-str
 
-  #_(testing "return named parameters in the order of occurence"
+  (testing "return named parameters in the order of occurence"
     (is (= {:sql-str "?" :params  [:param1]}
            (named-params/parse-sql-str ":param1")))
     (is (= {:sql-str "? ?" :params [:param1 :param2]}
            (named-params/parse-sql-str ":param1 :param2")))
-    (is (= {:sql-str "? ?" :params [:param1 :param2]}
+    (is (= {:sql-str "?,?" :params [:param1 :param2]}
            (named-params/parse-sql-str ":param1,:param2"))))
 
-  #_(testing "parameters are treated independent of each other"
+  (testing "parameters are treated independent of each other"
     (is (= {:sql-str "? ?" :params [:param :param]}
            (named-params/parse-sql-str ":param :param"))))
 
-  #_(testing "consecutive parameters are treated as one"
-    (is (= {:sql-str "? ?" :params [:param1:param2]}
+  (testing "consecutive parameters are treated as one"
+    (is (= {:sql-str "?" :params [:param1:param2]}
            (named-params/parse-sql-str ":param1:param2"))))
 
   #_(testing "parameters in quotes are ignored"
@@ -105,14 +105,14 @@
                          (named-params/init-parse)
                          (named-params/accept-named-parameter))]
       (is (final-parse? next-parse))
-      (is (parse-result= [[:named-param ":named-param"]] next-parse)))
+      (is (parse-result= [[:named-param "named-param"]] next-parse)))
 
     (let [next-parse (-> ":param1 :param2"
                          (named-params/init-parse)
                          (named-params/accept-named-parameter))]
       (is (input= " :param2" next-parse))
       (is (accept-fn= named-params/accept-whitespace next-parse))
-      (is (parse-result= [[:named-param ":param1"]] next-parse)))))
+      (is (parse-result= [[:named-param "param1"]] next-parse)))))
 
 (deftest apply-accept-fn
 
