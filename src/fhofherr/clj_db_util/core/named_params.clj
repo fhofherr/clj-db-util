@@ -7,7 +7,7 @@
 
 (defn whitespace?
   [c]
-  (#{\space \newline \tab \return} c))
+  (#{\space \newline \tab \return \,} c))
 
 (defn- token
   [tok-kw tok-v]

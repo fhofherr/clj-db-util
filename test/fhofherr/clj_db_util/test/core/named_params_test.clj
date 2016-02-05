@@ -79,11 +79,11 @@
 (deftest accept-whitespace
   (testing "accept only whitespace"
 
-    (let [next-parse (-> " \r\n\t"
+    (let [next-parse (-> " \r\n\t,"
                          (named-params/init-parse)
                          (named-params/accept-whitespace))]
       (is (final-parse? next-parse))
-      (is (parse-result= [[:whitespace " \r\n\t"]] next-parse)))
+      (is (parse-result= [[:whitespace " \r\n\t,"]] next-parse)))
 
     (let [next-parse (-> " some-token"
                          (named-params/init-parse)
