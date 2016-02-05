@@ -92,6 +92,21 @@
       (is (accept-fn= named-params/accept-any-token next-parse))
       (is (parse-result= [" "] next-parse)))))
 
+(deftest accept-named-parameter
+  (testing "accept a colon followed by at least one non-whitespace character"
+    (let [next-parse (-> ":named-param"
+                         (named-params/init-parse)
+                         (named-params/accept-named-parameter))]
+      (is (final-parse? next-parse))
+      (is (parse-result= [":named-param"] next-parse)))
+
+    (let [next-parse (-> ":param1 :param2"
+                         (named-params/init-parse)
+                         (named-params/accept-named-parameter))]
+      (is (input= " :param2" next-parse))
+      (is (accept-fn= named-params/accept-whitespace next-parse))
+      (is (parse-result= [":param1"] next-parse)))))
+
 (deftest apply-accept-fn
 
   (testing "return the parse result if the input is fully consumed"
