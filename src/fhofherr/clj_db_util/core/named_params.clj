@@ -3,6 +3,7 @@
 
 (declare accept-whitespace)
 (declare accept-any-token)
+(declare accept-named-parameter)
 
 (defn whitespace?
   [c]
@@ -25,7 +26,10 @@
 
 (def accept-whitespace (accept :whitespace
                                #(split-with whitespace? %)
-                               #(when (seq %) accept-any-token)))
+                               #(when-let [rest-in (seq %)]
+                                 (case (first rest-in)
+                                   \: accept-named-parameter
+                                   accept-any-token))))
 
 (def accept-any-token (accept :any-token
                               #(split-with (complement whitespace?) %)

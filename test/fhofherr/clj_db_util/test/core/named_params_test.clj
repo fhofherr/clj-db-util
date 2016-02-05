@@ -90,6 +90,13 @@
                          (named-params/accept-whitespace))]
       (is (input= "some-token" next-parse))
       (is (accept-fn= named-params/accept-any-token next-parse))
+      (is (parse-result= [[:whitespace " "]] next-parse)))
+
+    (let [next-parse (-> " :named-param"
+                         (named-params/init-parse)
+                         (named-params/accept-whitespace))]
+      (is (input= ":named-param" next-parse))
+      (is (accept-fn= named-params/accept-named-parameter next-parse))
       (is (parse-result= [[:whitespace " "]] next-parse)))))
 
 (deftest accept-named-parameter
