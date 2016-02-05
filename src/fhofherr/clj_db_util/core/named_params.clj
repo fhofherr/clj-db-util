@@ -35,12 +35,14 @@
                               #(split-with (complement whitespace?) %)
                               #(when (seq %) accept-whitespace)))
 
-(def accept-named-parameter (accept :named-param
-                                    #(let [[res rest-in] (->> %
-                                                              (rest)
-                                                              (split-with (complement whitespace?)))]
-                                      [(cons \: res) rest-in])
-                                    #(when (seq %) accept-whitespace)))
+(def accept-named-parameter (letfn [(consume-named-param [input]
+                                      (let [[result rest-in] (->> input
+                                                                  (rest)
+                                                                  (split-with (complement whitespace?)))]
+                                        [(cons \: result) rest-in]))]
+                              (accept :named-param
+                                      consume-named-param
+                                      #(when (seq %) accept-whitespace))))
 
 (defn apply-accept-fn
   [{:keys [accept-fn] :as parse}]
