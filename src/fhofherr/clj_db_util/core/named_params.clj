@@ -8,25 +8,35 @@
   [c]
   (#{\space \newline \tab \return} c))
 
-(defn- new-accept-fn
-  [consume-fn dispatch-fn]
+(defn- token
+  [tok-kw tok-v]
+  [tok-kw (string/join "" tok-v)])
+
+(defn- accept
+  [tok-kw consume-fn dispatch-fn]
   (fn [{:keys [input] :as parse}]
     (let [[parse-result rest-input] (consume-fn input)
           next-accept-fn (dispatch-fn rest-input)]
       (-> parse
           (assoc :input (seq rest-input))
           (assoc :accept-fn next-accept-fn)
-          (update :parse-result #(conj (vec %) (string/join "" parse-result)))))))
+          (update :parse-result #(conj (vec %)
+                                       (token tok-kw parse-result)))))))
 
-(def accept-whitespace (new-accept-fn #(split-with whitespace? %)
-                                      #(when (seq %) accept-any-token)))
+(def accept-whitespace (accept :whitespace
+                               #(split-with whitespace? %)
+                               #(when (seq %) accept-any-token)))
 
-(def accept-any-token (new-accept-fn #(split-with (complement whitespace?) %)
-                                     #(when (seq %) accept-whitespace)))
+(def accept-any-token (accept :any-token
+                              #(split-with (complement whitespace?) %)
+                              #(when (seq %) accept-whitespace)))
 
-(def accept-named-parameter (new-accept-fn #(let [[pr ri] (split-with (complement whitespace?) (rest %))]
-                                             [(cons \: pr) ri])
-                                           #(when (seq %) accept-whitespace)))
+(def accept-named-parameter (accept :named-param
+                                    #(let [[res rest-in] (->> %
+                                                              (rest)
+                                                              (split-with (complement whitespace?)))]
+                                      [(cons \: res) rest-in])
+                                    #(when (seq %) accept-whitespace)))
 
 (defn apply-accept-fn
   [{:keys [accept-fn] :as parse}]
@@ -45,5 +55,5 @@
   (let [res (trampoline apply-accept-fn (-> sql-str
                                             (init-parse)
                                             (assoc :accept-fn accept-any-token)))]
-    {:sql-str (string/join "" res)
-     :params []}))
+    {:sql-str (string/join "" (map second res))
+     :params  []}))

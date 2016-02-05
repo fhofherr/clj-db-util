@@ -67,14 +67,14 @@
                          (named-params/init-parse)
                          (named-params/accept-any-token))]
       (is (final-parse? next-parse))
-      (is (parse-result= ["not-white-space"] next-parse)))
+      (is (parse-result= [[:any-token "not-white-space"]] next-parse)))
 
     (let [next-parse (-> "first-token second-token"
                          (named-params/init-parse)
                          (named-params/accept-any-token))]
       (is (input= " second-token" next-parse))
       (is (accept-fn= named-params/accept-whitespace next-parse))
-      (is (parse-result= ["first-token"] next-parse)))))
+      (is (parse-result= [[:any-token "first-token"]] next-parse)))))
 
 (deftest accept-whitespace
   (testing "accept only whitespace"
@@ -83,14 +83,14 @@
                          (named-params/init-parse)
                          (named-params/accept-whitespace))]
       (is (final-parse? next-parse))
-      (is (parse-result= [" \r\n\t"] next-parse)))
+      (is (parse-result= [[:whitespace " \r\n\t"]] next-parse)))
 
     (let [next-parse (-> " some-token"
                          (named-params/init-parse)
                          (named-params/accept-whitespace))]
       (is (input= "some-token" next-parse))
       (is (accept-fn= named-params/accept-any-token next-parse))
-      (is (parse-result= [" "] next-parse)))))
+      (is (parse-result= [[:whitespace " "]] next-parse)))))
 
 (deftest accept-named-parameter
   (testing "accept a colon followed by at least one non-whitespace character"
@@ -98,14 +98,14 @@
                          (named-params/init-parse)
                          (named-params/accept-named-parameter))]
       (is (final-parse? next-parse))
-      (is (parse-result= [":named-param"] next-parse)))
+      (is (parse-result= [[:named-param ":named-param"]] next-parse)))
 
     (let [next-parse (-> ":param1 :param2"
                          (named-params/init-parse)
                          (named-params/accept-named-parameter))]
       (is (input= " :param2" next-parse))
       (is (accept-fn= named-params/accept-whitespace next-parse))
-      (is (parse-result= [":param1"] next-parse)))))
+      (is (parse-result= [[:named-param ":param1"]] next-parse)))))
 
 (deftest apply-accept-fn
 
@@ -114,7 +114,7 @@
                      (named-params/init-parse)
                      (assoc :accept-fn named-params/accept-any-token)
                      (named-params/apply-accept-fn))]
-      (is (= ["some-token"] result))))
+      (is (= [[:any-token "some-token"]] result))))
 
   (testing "return a function if there is some input left"
     (let [intermediate-result (-> "some-token\t"
@@ -123,4 +123,4 @@
                                   (named-params/apply-accept-fn))
           final-result (intermediate-result)]
       (is (function? intermediate-result))
-      (is (= ["some-token" "\t"] final-result)))))
+      (is (= [[:any-token "some-token"] [:whitespace "\t"]] final-result)))))
