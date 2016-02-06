@@ -1,6 +1,7 @@
 (ns fhofherr.clj-db-util.core
   (:require [clojure.java.jdbc :as jdbc]
-            [clojure.tools.logging :as log])
+            [clojure.tools.logging :as log]
+            [fhofherr.clj-db-util.core.named-params :as named-params])
   (:import (javax.sql DataSource)
            (org.flywaydb.core Flyway)
            (com.zaxxer.hikari HikariDataSource HikariConfig)
@@ -191,6 +192,14 @@
                                                        (rest reversed-bindings))]
     `(transactional-bind ~outermost-tx-op ~outermost-op-factory)))
 
+(defn- match-sql-params
+  [sql sql-params]
+  (if (map? sql-params)
+    (let [{:keys [sql-str params]} (named-params/parse-sql-str sql)
+          param-vals (map #(get sql-params %) params)]
+      (concat [sql-str] param-vals))
+    (concat [sql] (seq sql-params))))
+
 (defn insert!
   [table & records]
   {:pre [table (not-empty records)]}
@@ -207,7 +216,10 @@
    (transactional-operation
     [tx-state]
     (let [[res] (jdbc/update! (:t-con tx-state) table value (seq where-clause))]
-      [res tx-state]))))
+      [res tx-state])))
+  ([table value where-clause sql-params]
+    (let [where-clause-with-params (match-sql-params where-clause sql-params)]
+      (update! table value where-clause-with-params))))
 
 (defn delete!
   ([table]
@@ -216,7 +228,10 @@
    (transactional-operation
     [tx-state]
     (let [[res] (jdbc/delete! (:t-con tx-state) table (seq where-clause))]
-      [res tx-state]))))
+      [res tx-state])))
+  ([table where-clause sql-params]
+   (let [where-clause-with-params (match-sql-params where-clause sql-params)]
+     (delete! table where-clause-with-params))))
 
 (defn query-str
   ([sql]
@@ -224,7 +239,7 @@
   ([sql sql-params]
    (transactional-operation
     [tx-state]
-    (let [sql-with-params (concat [sql] (seq sql-params))
+    (let [sql-with-params (match-sql-params sql sql-params)
           res (jdbc/query (:t-con tx-state) sql-with-params)]
       [res tx-state]))))
 
@@ -234,7 +249,7 @@
   ([sql sql-params]
    (transactional-operation
     [tx-state]
-    (let [sql-with-params (concat [sql] (seq sql-params))
+    (let [sql-with-params (match-sql-params sql sql-params)
           [res] (jdbc/execute! (:t-con tx-state) sql-with-params)]
       [res tx-state]))))
 

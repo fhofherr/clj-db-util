@@ -67,6 +67,17 @@
             [_ err1] (db-util/with-db-transaction db insert)
             [res err2] (db-util/with-db-transaction db select-pos-params)]
         (is (every? nil? [err1 err2]))
+        (is (= [{:key "key" :value "value"}] res))))
+
+    (testing "select with named parameters"
+      (db-util/clean-db db)
+      (db-util/migrate-db db)
+
+      (let [select-named-params (db-util/query-str "SELECT key, value FROM t_key_value_pairs WHERE key = :key"
+                                                   {:key "key"})
+            [_ err1] (db-util/with-db-transaction db insert)
+            [res err2] (db-util/with-db-transaction db select-named-params)]
+        (is (every? nil? [err1 err2]))
         (is (= [{:key "key" :value "value"}] res))))))
 
 (deftest ^:integration update!
@@ -102,6 +113,18 @@
       (db-util/migrate-db db)
 
       (let [update (db-util/update! :t_key_value_pairs {:value "another value"} ["key = ?" "key"])
+            [_ err1] (db-util/with-db-transaction db insert)
+            [n-updated err2] (db-util/with-db-transaction db update)
+            [res err3] (db-util/with-db-transaction db select)]
+        (is (every? nil? [err1 err2 err3]))
+        (is (= 1 n-updated))
+        (is (= [{:key "key" :value "another value"}] res))))
+
+    (testing "update with named parameters"
+      (db-util/clean-db db)
+      (db-util/migrate-db db)
+
+      (let [update (db-util/update! :t_key_value_pairs {:value "another value"} "key = :key" {:key "key"})
             [_ err1] (db-util/with-db-transaction db insert)
             [n-updated err2] (db-util/with-db-transaction db update)
             [res err3] (db-util/with-db-transaction db select)]
@@ -145,6 +168,17 @@
             [res err3] (db-util/with-db-transaction db select)]
         (is (every? nil? [err1 err2 err3]))
         (is (= 1 n-deleted))
+        (is (empty? res))))
+
+    (testing "conditional delete with named parameters"
+      (db-util/clean-db db)
+      (db-util/migrate-db db)
+      (let [delete (db-util/delete! :t_key_value_pairs "key = :key" {:key "key"})
+            [_ err1] (db-util/with-db-transaction db insert)
+            [n-deleted err2] (db-util/with-db-transaction db delete)
+            [res err3] (db-util/with-db-transaction db select)]
+        (is (every? nil? [err1 err2 err3]))
+        (is (= 1 n-deleted))
         (is (empty? res))))))
 
 (deftest ^:integration execute-str!
@@ -167,6 +201,19 @@
       (db-util/migrate-db db)
       (let [execute-update (db-util/execute-str! "UPDATE t_key_value_pairs SET value = 'another value' WHERE key = ?"
                                                  ["key"])
+            [_ err1] (db-util/with-db-transaction db insert)
+            [n-updated err2] (db-util/with-db-transaction db execute-update)
+            [res err3] (db-util/with-db-transaction db select)]
+        (is (every? nil? [err1 err2 err3]))
+        (is (= 1 n-updated))
+        (is (= [{:key "key" :value "another value"}] res))))
+
+
+    (testing "execute-str! with named parameters"
+      (db-util/clean-db db)
+      (db-util/migrate-db db)
+      (let [execute-update (db-util/execute-str! "UPDATE t_key_value_pairs SET value = 'another value' WHERE key = :key"
+                                                 {:key "key"})
             [_ err1] (db-util/with-db-transaction db insert)
             [n-updated err2] (db-util/with-db-transaction db execute-update)
             [res err3] (db-util/with-db-transaction db select)]
