@@ -4,7 +4,7 @@
             [environ.core :refer [env]]))
 
 (def insert (db-util/insert! :t_key_value_pairs {:key "key" :value "value"}))
-(def select (db-util/query-str "SELECT key, value FROM t_key_value_pairs ORDER BY key"))
+(def select (db-util/query "SELECT key, value FROM t_key_value_pairs ORDER BY key"))
 
 (deftest ^:integration insert!
   (db-util/with-database
@@ -44,7 +44,7 @@
         (is (every? nil? [err1 err2]))
         (is (= [{:key "key1" :value "value1"} {:key "key2" :value "value2"}] res))))))
 
-(deftest ^:integration query-str
+(deftest ^:integration query
   (db-util/with-database
     [db (db-util/connect-to-db (env :db-url) (env :db-user) (env :db-pass))]
 
@@ -52,7 +52,7 @@
       (db-util/clean-db db)
       (db-util/migrate-db db)
 
-      (let [select-no-params (db-util/query-str "SELECT key, value FROM t_key_value_pairs")
+      (let [select-no-params (db-util/query "SELECT key, value FROM t_key_value_pairs")
             [_ err1] (db-util/with-db-transaction db insert)
             [res err2] (db-util/with-db-transaction db select-no-params)]
         (is (every? nil? [err1 err2]))
@@ -62,8 +62,8 @@
       (db-util/clean-db db)
       (db-util/migrate-db db)
 
-      (let [select-pos-params (db-util/query-str "SELECT key, value FROM t_key_value_pairs WHERE key = ?"
-                                                 ["key"])
+      (let [select-pos-params (db-util/query "SELECT key, value FROM t_key_value_pairs WHERE key = ?"
+                                             ["key"])
             [_ err1] (db-util/with-db-transaction db insert)
             [res err2] (db-util/with-db-transaction db select-pos-params)]
         (is (every? nil? [err1 err2]))
@@ -73,8 +73,8 @@
       (db-util/clean-db db)
       (db-util/migrate-db db)
 
-      (let [select-named-params (db-util/query-str "SELECT key, value FROM t_key_value_pairs WHERE key = :key"
-                                                   {:key "key"})
+      (let [select-named-params (db-util/query "SELECT key, value FROM t_key_value_pairs WHERE key = :key"
+                                               {:key "key"})
             [_ err1] (db-util/with-db-transaction db insert)
             [res err2] (db-util/with-db-transaction db select-named-params)]
         (is (every? nil? [err1 err2]))

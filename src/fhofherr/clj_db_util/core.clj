@@ -230,9 +230,9 @@
    {:pre [table]}
    (wrap-jdbc-fn jdbc/delete! table (prepare-params where-clause param-vals))))
 
-(defn query-str
+(defn query
   ([sql-str]
-   (query-str sql-str nil))
+   (query sql-str nil))
   ([sql-str param-vals]
    {:pre [sql-str]}
    (wrap-jdbc-fn jdbc/query (prepare-params sql-str param-vals))))

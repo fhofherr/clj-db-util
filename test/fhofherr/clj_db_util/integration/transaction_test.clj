@@ -10,7 +10,7 @@
                              inserted-rows))
 
 (def read-key-value-pair
-  (db-util/transactional-let [query-result (db-util/query-str
+  (db-util/transactional-let [query-result (db-util/query
                                             "SELECT key, value FROM t_key_value_pairs WHERE key = 'key'")]
                              query-result))
 
