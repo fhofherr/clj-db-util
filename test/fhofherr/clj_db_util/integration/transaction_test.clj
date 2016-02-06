@@ -15,7 +15,7 @@
                              query-result))
 
 (def delete-key-value-pair
-  (db-util/transactional-let [deleted-rows (db-util/delete! :t_key_value_pairs ["key = 'key'"])]
+  (db-util/transactional-let [deleted-rows (db-util/delete! :t_key_value_pairs "key = 'key'")]
                              deleted-rows))
 
 (deftest ^:integration basic-transaction-handling

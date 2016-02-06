@@ -192,7 +192,7 @@
                                                        (rest reversed-bindings))]
     `(transactional-bind ~outermost-tx-op ~outermost-op-factory)))
 
-(defn- match-sql-params
+(defn- prepare-params
   [s param-vals]
   (if (map? param-vals)
     (let [{:keys [parsed-str param-keys]} (named-params/parse-str s)
@@ -212,26 +212,26 @@
   ([table value]
    (update! table value nil))
   ([table value where-clause]
+   (update! table value where-clause nil))
+  ([table value where-clause param-vals]
    {:pre [table value]}
    (transactional-operation
     [tx-state]
-    (let [[res] (jdbc/update! (:t-con tx-state) table value (seq where-clause))]
-      [res tx-state])))
-  ([table value where-clause param-vals]
-    (let [where-clause-with-params (match-sql-params where-clause param-vals)]
-      (update! table value where-clause-with-params))))
+    (let [wc (prepare-params where-clause param-vals)
+          [res] (jdbc/update! (:t-con tx-state) table value wc)]
+      [res tx-state]))))
 
 (defn delete!
   ([table]
    (delete! table nil))
   ([table where-clause]
+   (delete! table where-clause nil))
+  ([table where-clause param-vals]
    (transactional-operation
     [tx-state]
-    (let [[res] (jdbc/delete! (:t-con tx-state) table (seq where-clause))]
-      [res tx-state])))
-  ([table where-clause param-vals]
-   (let [where-clause-with-params (match-sql-params where-clause param-vals)]
-     (delete! table where-clause-with-params))))
+    (let [wc (prepare-params where-clause param-vals)
+          [res] (jdbc/delete! (:t-con tx-state) table wc)]
+      [res tx-state]))))
 
 (defn query-str
   ([sql-str]
@@ -239,7 +239,7 @@
   ([sql-str param-vals]
    (transactional-operation
     [tx-state]
-    (let [sql-with-params (match-sql-params sql-str param-vals)
+    (let [sql-with-params (prepare-params sql-str param-vals)
           res (jdbc/query (:t-con tx-state) sql-with-params)]
       [res tx-state]))))
 
@@ -249,7 +249,7 @@
   ([sql-str param-vals]
    (transactional-operation
     [tx-state]
-    (let [sql-with-params (match-sql-params sql-str param-vals)
+    (let [sql-with-params (prepare-params sql-str param-vals)
           [res] (jdbc/execute! (:t-con tx-state) sql-with-params)]
       [res tx-state]))))
 
