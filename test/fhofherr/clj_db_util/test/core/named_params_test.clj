@@ -114,6 +114,33 @@
       (is (accept-fn= named-params/accept-whitespace next-parse))
       (is (parse-result= [[:named-param "param1"]] next-parse)))))
 
+(deftest accept-quoted-string
+  (testing "accept strings in single quotes"
+    (let [next-parse (-> "''"
+                         (named-params/init-parse)
+                         (named-params/accept-quoted-string))]
+      (is (final-parse? next-parse))
+      (is (parse-result= [[:quoted-string "''"]] next-parse)))
+
+    (let [next-parse (-> "':something'"
+                         (named-params/init-parse)
+                         (named-params/accept-quoted-string))]
+      (is (final-parse? next-parse))
+      (is (parse-result= [[:quoted-string "':something'"]] next-parse))))
+
+  (testing "accept strings in double quotes"
+    (let [next-parse (-> "\"\""
+                         (named-params/init-parse)
+                         (named-params/accept-quoted-string))]
+      (is (final-parse? next-parse))
+      (is (parse-result= [[:quoted-string "\"\""]] next-parse)))
+
+    (let [next-parse (-> "\":something\""
+                         (named-params/init-parse)
+                         (named-params/accept-quoted-string))]
+      (is (final-parse? next-parse))
+      (is (parse-result= [[:quoted-string "\":something\""]] next-parse)))))
+
 (deftest apply-accept-fn
 
   (testing "return the parse result if the input is fully consumed"

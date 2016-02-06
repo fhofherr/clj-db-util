@@ -54,6 +54,21 @@
                                       consume-named-param
                                       #(when (seq %) accept-whitespace))))
 
+(def accept-quoted-string (letfn [(consume-quoted [quote-char result [x y & rest-input]]
+                                    (cond
+                                      (nil? y) [(conj result x) rest-input]
+                                      (and (= x quote-char) (not= y quote-char)) [(conj result x) (conj rest-input y)]
+                                      (= x y quote-char) (recur quote-char (conj result x y) rest-input)
+                                      :else (recur quote-char (conj result x) (conj rest-input y))))]
+                            (accept :quoted-string
+                                    #(consume-quoted (first %) [(first %)] (rest %))
+                                    #(when (seq %)
+                                      (let [c (first %)]
+                                        (cond
+                                          (whitespace? c) accept-whitespace
+                                          (= \: c) accept-named-parameter
+                                          :else accept-any-token))))))
+
 (defn apply-accept-fn
   [{:keys [accept-fn] :as parse}]
   {:pre [accept-fn]}
