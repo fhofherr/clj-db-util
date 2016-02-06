@@ -38,21 +38,13 @@
   [{:keys [input]}]
   (nil? input))
 
-(defn- input=
-  [expected {:keys [input]}]
-  (= (seq expected) input))
-
-(defn- accept-fn=
-  [expected {:keys [accept-fn]}]
-  (= expected accept-fn))
-
 (defn- final-parse?
   [parse]
   (if-not (and (input-consumed? parse)
-               (accept-fn= nil parse))
+               (nil? (:accept-fn parse)))
     (do
       (printf "Input consumed? %s\n" (input-consumed? parse))
-      (printf "accept-fn == nil? %s\n" (accept-fn= nil parse))
+      (printf "accept-fn == nil? %s\n" (nil? (:accept-fn parse)))
       false)
     true))
 
@@ -67,14 +59,7 @@
                          (named-params/init-parse)
                          (named-params/accept-any-token))]
       (is (final-parse? next-parse))
-      (is (parse-result= [[:any-token "not-white-space"]] next-parse)))
-
-    (let [next-parse (-> "first-token second-token"
-                         (named-params/init-parse)
-                         (named-params/accept-any-token))]
-      (is (input= " second-token" next-parse))
-      (is (accept-fn= named-params/accept-whitespace next-parse))
-      (is (parse-result= [[:any-token "first-token"]] next-parse)))))
+      (is (parse-result= [[:any-token "not-white-space"]] next-parse)))))
 
 (deftest accept-whitespace
   (testing "accept only whitespace"
@@ -83,21 +68,7 @@
                          (named-params/init-parse)
                          (named-params/accept-whitespace))]
       (is (final-parse? next-parse))
-      (is (parse-result= [[:whitespace " \r\n\t,"]] next-parse)))
-
-    (let [next-parse (-> " some-token"
-                         (named-params/init-parse)
-                         (named-params/accept-whitespace))]
-      (is (input= "some-token" next-parse))
-      (is (accept-fn= named-params/accept-any-token next-parse))
-      (is (parse-result= [[:whitespace " "]] next-parse)))
-
-    (let [next-parse (-> " :named-param"
-                         (named-params/init-parse)
-                         (named-params/accept-whitespace))]
-      (is (input= ":named-param" next-parse))
-      (is (accept-fn= named-params/accept-named-parameter next-parse))
-      (is (parse-result= [[:whitespace " "]] next-parse)))))
+      (is (parse-result= [[:whitespace " \r\n\t,"]] next-parse)))))
 
 (deftest accept-named-parameter
   (testing "accept a colon followed by at least one non-whitespace character"
@@ -105,14 +76,7 @@
                          (named-params/init-parse)
                          (named-params/accept-named-parameter))]
       (is (final-parse? next-parse))
-      (is (parse-result= [[:named-param "named-param"]] next-parse)))
-
-    (let [next-parse (-> ":param1 :param2"
-                         (named-params/init-parse)
-                         (named-params/accept-named-parameter))]
-      (is (input= " :param2" next-parse))
-      (is (accept-fn= named-params/accept-whitespace next-parse))
-      (is (parse-result= [[:named-param "param1"]] next-parse)))))
+      (is (parse-result= [[:named-param "named-param"]] next-parse)))))
 
 (deftest accept-quoted-string
   (testing "accept strings in single quotes"
@@ -158,3 +122,21 @@
           final-result (intermediate-result)]
       (is (function? intermediate-result))
       (is (= [[:any-token "some-token"] [:whitespace "\t"]] final-result)))))
+
+(deftest dispatch
+  (testing "dispatch to accept-named-parameter"
+    (is (= named-params/accept-named-parameter (named-params/dispatch \:))))
+
+  (testing "dispatch to accept-whitespace"
+    (is (= named-params/accept-whitespace (named-params/dispatch \space)))
+    (is (= named-params/accept-whitespace (named-params/dispatch \newline)))
+    (is (= named-params/accept-whitespace (named-params/dispatch \tab)))
+    (is (= named-params/accept-whitespace (named-params/dispatch \return)))
+    (is (= named-params/accept-whitespace (named-params/dispatch \,))))
+
+  (testing "dispatch to accept-quoted-string"
+    (is (= named-params/accept-quoted-string (named-params/dispatch \')))
+    (is (= named-params/accept-quoted-string (named-params/dispatch \"))))
+
+  (testing "dispatch to accept-any-token"
+    (is (= named-params/accept-any-token (named-params/dispatch \x)))))
