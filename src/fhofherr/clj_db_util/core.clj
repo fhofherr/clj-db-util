@@ -200,13 +200,17 @@
       (concat [parsed-str] mapped-vals))
     (concat [s] (seq param-vals))))
 
+(defn- wrap-jdbc-fn
+  [jdbc-fn & args]
+  (transactional-operation
+   [tx-state]
+   (let [res (apply jdbc-fn (:t-con tx-state) args)]
+     [res tx-state])))
+
 (defn insert!
   [table & records]
   {:pre [table (not-empty records)]}
-  (transactional-operation
-   [tx-state]
-   (let [res (apply jdbc/insert! (:t-con tx-state) table records)]
-     [res tx-state])))
+  (apply wrap-jdbc-fn jdbc/insert! table records))
 
 (defn update!
   ([table value]
@@ -215,11 +219,7 @@
    (update! table value where-clause nil))
   ([table value where-clause param-vals]
    {:pre [table value]}
-   (transactional-operation
-    [tx-state]
-    (let [wc (prepare-params where-clause param-vals)
-          [res] (jdbc/update! (:t-con tx-state) table value wc)]
-      [res tx-state]))))
+   (wrap-jdbc-fn jdbc/update! table value (prepare-params where-clause param-vals))))
 
 (defn delete!
   ([table]
@@ -227,31 +227,22 @@
   ([table where-clause]
    (delete! table where-clause nil))
   ([table where-clause param-vals]
-   (transactional-operation
-    [tx-state]
-    (let [wc (prepare-params where-clause param-vals)
-          [res] (jdbc/delete! (:t-con tx-state) table wc)]
-      [res tx-state]))))
+   {:pre [table]}
+   (wrap-jdbc-fn jdbc/delete! table (prepare-params where-clause param-vals))))
 
 (defn query-str
   ([sql-str]
    (query-str sql-str nil))
   ([sql-str param-vals]
-   (transactional-operation
-    [tx-state]
-    (let [sql-with-params (prepare-params sql-str param-vals)
-          res (jdbc/query (:t-con tx-state) sql-with-params)]
-      [res tx-state]))))
+   {:pre [sql-str]}
+   (wrap-jdbc-fn jdbc/query (prepare-params sql-str param-vals))))
 
 (defn execute-str!
   ([sql-str]
    (execute-str! sql-str nil))
   ([sql-str param-vals]
-   (transactional-operation
-    [tx-state]
-    (let [sql-with-params (prepare-params sql-str param-vals)
-          [res] (jdbc/execute! (:t-con tx-state) sql-with-params)]
-      [res tx-state]))))
+   {:pre [sql-str]}
+   (wrap-jdbc-fn jdbc/execute! (prepare-params sql-str param-vals))))
 
 (defn rollback!
   []

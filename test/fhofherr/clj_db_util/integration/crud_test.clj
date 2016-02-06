@@ -93,7 +93,7 @@
             [n-updated err2] (db-util/with-db-transaction db update)
             [res err3] (db-util/with-db-transaction db select)]
         (is (every? nil? [err1 err2 err3]))
-        (is (= 1 n-updated))
+        (is (= [1] n-updated))
         (is (= [{:key "key" :value "another value"}] res))))
 
     (testing "update with where clause"
@@ -105,7 +105,7 @@
             [n-updated err2] (db-util/with-db-transaction db update)
             [res err3] (db-util/with-db-transaction db select)]
         (is (every? nil? [err1 err2 err3]))
-        (is (= 1 n-updated))
+        (is (= [1] n-updated))
         (is (= [{:key "key" :value "another value"}] res))))
 
     (testing "update with positional parameters"
@@ -117,7 +117,7 @@
             [n-updated err2] (db-util/with-db-transaction db update)
             [res err3] (db-util/with-db-transaction db select)]
         (is (every? nil? [err1 err2 err3]))
-        (is (= 1 n-updated))
+        (is (= [1] n-updated))
         (is (= [{:key "key" :value "another value"}] res))))
 
     (testing "update with named parameters"
@@ -129,7 +129,7 @@
             [n-updated err2] (db-util/with-db-transaction db update)
             [res err3] (db-util/with-db-transaction db select)]
         (is (every? nil? [err1 err2 err3]))
-        (is (= 1 n-updated))
+        (is (= [1] n-updated))
         (is (= [{:key "key" :value "another value"}] res))))))
 
 (deftest ^:integration delete!
@@ -145,7 +145,7 @@
             [n-deleted err2] (db-util/with-db-transaction db delete)
             [res err3] (db-util/with-db-transaction db select)]
         (is (every? nil? [err1 err2 err3]))
-        (is (= 1 n-deleted))
+        (is (= [1] n-deleted))
         (is (empty? res))))
 
     (testing "conditional delete"
@@ -156,7 +156,7 @@
             [n-deleted err2] (db-util/with-db-transaction db delete)
             [res err3] (db-util/with-db-transaction db select)]
         (is (every? nil? [err1 err2 err3]))
-        (is (= 1 n-deleted))
+        (is (= [1] n-deleted))
         (is (empty? res))))
 
     (testing "conditional delete with positional parameters"
@@ -167,7 +167,7 @@
             [n-deleted err2] (db-util/with-db-transaction db delete)
             [res err3] (db-util/with-db-transaction db select)]
         (is (every? nil? [err1 err2 err3]))
-        (is (= 1 n-deleted))
+        (is (= [1] n-deleted))
         (is (empty? res))))
 
     (testing "conditional delete with named parameters"
@@ -178,7 +178,7 @@
             [n-deleted err2] (db-util/with-db-transaction db delete)
             [res err3] (db-util/with-db-transaction db select)]
         (is (every? nil? [err1 err2 err3]))
-        (is (= 1 n-deleted))
+        (is (= [1] n-deleted))
         (is (empty? res))))))
 
 (deftest ^:integration execute-str!
@@ -193,7 +193,7 @@
             [n-inserted err1] (db-util/with-db-transaction db execute-insert)
             [res err2] (db-util/with-db-transaction db select)]
         (is (every? nil? [err1 err2]))
-        (is (= 1 n-inserted))
+        (is (= [1] n-inserted))
         (is (= [{:key "key" :value "value"}] res))))
 
     (testing "execute-str! with positional parameters"
@@ -205,15 +205,17 @@
             [n-updated err2] (db-util/with-db-transaction db execute-update)
             [res err3] (db-util/with-db-transaction db select)]
         (is (every? nil? [err1 err2 err3]))
-        (is (= 1 n-updated))
-        (is (= [{:key "key" :value "another value"}] res)))) (testing "execute-str! with named parameters"
-                                                               (db-util/clean-db db)
-                                                               (db-util/migrate-db db)
-                                                               (let [execute-update (db-util/execute-str! "UPDATE t_key_value_pairs SET value = 'another value' WHERE key = :key"
-                                                                                                          {:key "key"})
-                                                                     [_ err1] (db-util/with-db-transaction db insert)
-                                                                     [n-updated err2] (db-util/with-db-transaction db execute-update)
-                                                                     [res err3] (db-util/with-db-transaction db select)]
-                                                                 (is (every? nil? [err1 err2 err3]))
-                                                                 (is (= 1 n-updated))
-                                                                 (is (= [{:key "key" :value "another value"}] res))))))
+        (is (= [1] n-updated))
+        (is (= [{:key "key" :value "another value"}] res))))
+
+    (testing "execute-str! with named parameters"
+      (db-util/clean-db db)
+      (db-util/migrate-db db)
+      (let [execute-update (db-util/execute-str! "UPDATE t_key_value_pairs SET value = 'another value' WHERE key = :key"
+                                                 {:key "key"})
+            [_ err1] (db-util/with-db-transaction db insert)
+            [n-updated err2] (db-util/with-db-transaction db execute-update)
+            [res err3] (db-util/with-db-transaction db select)]
+        (is (every? nil? [err1 err2 err3]))
+        (is (= [1] n-updated))
+        (is (= [{:key "key" :value "another value"}] res))))))
