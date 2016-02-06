@@ -201,42 +201,42 @@
 
 (defn update!
   ([table value]
-    (update! table value nil))
+   (update! table value nil))
   ([table value where-clause]
    {:pre [table value]}
    (transactional-operation
-     [tx-state]
-     (let [[res] (jdbc/update! (:t-con tx-state) table value (seq where-clause))]
-       [res tx-state]))))
+    [tx-state]
+    (let [[res] (jdbc/update! (:t-con tx-state) table value (seq where-clause))]
+      [res tx-state]))))
 
 (defn delete!
   ([table]
-    (delete! table nil))
+   (delete! table nil))
   ([table where-clause]
    (transactional-operation
-     [tx-state]
-     (let [[res] (jdbc/delete! (:t-con tx-state) table (seq where-clause))]
-       [res tx-state]))))
+    [tx-state]
+    (let [[res] (jdbc/delete! (:t-con tx-state) table (seq where-clause))]
+      [res tx-state]))))
 
 (defn query-str
   ([sql]
-    (query-str sql nil))
+   (query-str sql nil))
   ([sql sql-params]
    (transactional-operation
-     [tx-state]
-     (let [sql-with-params (concat [sql] (seq sql-params))
-           res (jdbc/query (:t-con tx-state) sql-with-params)]
-       [res tx-state]))))
+    [tx-state]
+    (let [sql-with-params (concat [sql] (seq sql-params))
+          res (jdbc/query (:t-con tx-state) sql-with-params)]
+      [res tx-state]))))
 
 (defn execute-str!
   ([sql]
-    (execute-str! sql nil))
+   (execute-str! sql nil))
   ([sql sql-params]
    (transactional-operation
-     [tx-state]
-     (let [sql-with-params (concat [sql] (seq sql-params))
-           [res] (jdbc/execute! (:t-con tx-state) sql-with-params)]
-       [res tx-state]))))
+    [tx-state]
+    (let [sql-with-params (concat [sql] (seq sql-params))
+          [res] (jdbc/execute! (:t-con tx-state) sql-with-params)]
+      [res tx-state]))))
 
 (defn rollback!
   []

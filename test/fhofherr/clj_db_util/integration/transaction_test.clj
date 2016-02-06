@@ -60,5 +60,4 @@
         (is (nil? no-result))
         (is (= db-util/err-transaction-rolled-back err1))
         (is (nil? err2))
-        (is (empty? query-result))))
-    ))
+        (is (empty? query-result))))))

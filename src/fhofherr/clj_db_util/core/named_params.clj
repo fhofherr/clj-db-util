@@ -40,8 +40,8 @@
           (assoc :input (seq rest-input)
                  :accept-fn next-accept-fn)
           (update :parse-result #(if (seq parse-result)
-                                  (conj (vec %) (token tok-kw parse-result))
-                                  %))))))
+                                   (conj (vec %) (token tok-kw parse-result))
+                                   %))))))
 
 (def accept-start (accept :start (fn [input] [nil input])))
 
@@ -79,8 +79,8 @@
 (defn parse-sql-str
   [sql-str]
   (let [parse-result (trampoline apply-accept-fn (-> sql-str
-                                            (init-parse)
-                                            (assoc :accept-fn accept-start)))
+                                                     (init-parse)
+                                                     (assoc :accept-fn accept-start)))
         [sql-str params] (reduce (fn [[ss ps] [tok-kw tok-v]]
                                    (if (= :named-param tok-kw)
                                      [(conj ss "?") (conj ps (keyword tok-v))]
