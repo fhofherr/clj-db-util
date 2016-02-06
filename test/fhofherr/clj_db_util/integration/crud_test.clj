@@ -181,7 +181,7 @@
         (is (= [1] n-deleted))
         (is (empty? res))))))
 
-(deftest ^:integration execute-str!
+(deftest ^:integration execute!
   (db-util/with-database
     [db (db-util/connect-to-db (env :db-url) (env :db-user) (env :db-pass))]
 
@@ -189,7 +189,7 @@
       (db-util/clean-db db)
       (db-util/migrate-db db)
 
-      (let [execute-insert (db-util/execute-str! "INSERT INTO t_key_value_pairs (key, value) values ('key', 'value')")
+      (let [execute-insert (db-util/execute! "INSERT INTO t_key_value_pairs (key, value) values ('key', 'value')")
             [n-inserted err1] (db-util/with-db-transaction db execute-insert)
             [res err2] (db-util/with-db-transaction db select)]
         (is (every? nil? [err1 err2]))
@@ -199,8 +199,8 @@
     (testing "execute-str! with positional parameters"
       (db-util/clean-db db)
       (db-util/migrate-db db)
-      (let [execute-update (db-util/execute-str! "UPDATE t_key_value_pairs SET value = 'another value' WHERE key = ?"
-                                                 ["key"])
+      (let [execute-update (db-util/execute! "UPDATE t_key_value_pairs SET value = 'another value' WHERE key = ?"
+                                             ["key"])
             [_ err1] (db-util/with-db-transaction db insert)
             [n-updated err2] (db-util/with-db-transaction db execute-update)
             [res err3] (db-util/with-db-transaction db select)]
@@ -211,8 +211,8 @@
     (testing "execute-str! with named parameters"
       (db-util/clean-db db)
       (db-util/migrate-db db)
-      (let [execute-update (db-util/execute-str! "UPDATE t_key_value_pairs SET value = 'another value' WHERE key = :key"
-                                                 {:key "key"})
+      (let [execute-update (db-util/execute! "UPDATE t_key_value_pairs SET value = 'another value' WHERE key = :key"
+                                             {:key "key"})
             [_ err1] (db-util/with-db-transaction db insert)
             [n-updated err2] (db-util/with-db-transaction db execute-update)
             [res err3] (db-util/with-db-transaction db select)]

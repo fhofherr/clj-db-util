@@ -237,9 +237,9 @@
    {:pre [sql-str]}
    (wrap-jdbc-fn jdbc/query (prepare-params sql-str param-vals))))
 
-(defn execute-str!
+(defn execute!
   ([sql-str]
-   (execute-str! sql-str nil))
+   (execute! sql-str nil))
   ([sql-str param-vals]
    {:pre [sql-str]}
    (wrap-jdbc-fn jdbc/execute! (prepare-params sql-str param-vals))))
