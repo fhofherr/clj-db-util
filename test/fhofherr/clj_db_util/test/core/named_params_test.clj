@@ -20,15 +20,15 @@
     (is (= {:sql-str "?" :params [:param1:param2]}
            (named-params/parse-sql-str ":param1:param2"))))
 
-  #_(testing "parameters in quotes are ignored"
+  (testing "parameters in quotes are ignored"
     (is (= {:sql-str "? ':ignored'" :params [:param]}
            (named-params/parse-sql-str ":param ':ignored'")))
-    (is (= {:sql-str "? ':ignored'" :params [:param]}
-           (named-params/parse-sql-str ":param '':ignored''")))
+    (is (= {:sql-str "? ''':ignored'''" :params [:param]}
+           (named-params/parse-sql-str ":param ''':ignored'''")))
     (is (= {:sql-str "\":ignored\" ?" :params [:param]}
            (named-params/parse-sql-str "\":ignored\" :param")))
-    (is (= {:sql-str "\":ignored\" ?" :params [:param]}
-           (named-params/parse-sql-str "\"\":ignored\"\" :param"))))
+    (is (= {:sql-str "\"\"\":ignored\"\"\" ?" :params [:param]}
+           (named-params/parse-sql-str "\"\"\":ignored\"\"\" :param"))))
 
   (testing "all other text is returned as-is"
     (is (= {:sql-str "SELECT * FROM t_key_value_pairs" :params []}

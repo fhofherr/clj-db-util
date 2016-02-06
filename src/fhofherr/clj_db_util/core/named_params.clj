@@ -4,6 +4,7 @@
 (declare accept-whitespace)
 (declare accept-any-token)
 (declare accept-named-parameter)
+(declare accept-quoted-string)
 
 (defn whitespace?
   [c]
@@ -31,19 +32,29 @@
                             (let [c (first rest-in)]
                               (cond
                                 (= \: c) accept-named-parameter
+                                (#{\' \"} c) accept-quoted-string
                                 (whitespace? c) accept-whitespace
                                 :else accept-any-token)))))
 
 (def accept-whitespace (accept :whitespace
                                #(split-with whitespace? %)
                                #(when-let [rest-in (seq %)]
-                                 (case (first rest-in)
-                                   \: accept-named-parameter
-                                   accept-any-token))))
+                                 (let [c (first rest-in)]
+                                   (cond
+                                     (whitespace? c) accept-whitespace
+                                     (= \: c) accept-named-parameter
+                                     (#{\' \"} c) accept-quoted-string
+                                     :else accept-any-token)))))
 
 (def accept-any-token (accept :any-token
                               #(split-with (complement whitespace?) %)
-                              #(when (seq %) accept-whitespace)))
+                              #(when-let [rest-in (seq %)]
+                                (let [c (first rest-in)]
+                                  (cond
+                                    (= \: c) accept-named-parameter
+                                    (#{\' \"} c) accept-quoted-string
+                                    (whitespace? c) accept-whitespace
+                                    :else accept-any-token)))))
 
 (def accept-named-parameter (letfn [(consume-named-param [input]
                                       (let [[result rest-in] (->> input
@@ -52,7 +63,13 @@
                                         [result rest-in]))]
                               (accept :named-param
                                       consume-named-param
-                                      #(when (seq %) accept-whitespace))))
+                                      #(when-let [rest-in (seq %)]
+                                        (let [c (first rest-in)]
+                                          (cond
+                                            (= \: c) accept-named-parameter
+                                            (#{\' \"} c) accept-quoted-string
+                                            (whitespace? c) accept-whitespace
+                                            :else accept-any-token))))))
 
 (def accept-quoted-string (letfn [(consume-quoted [quote-char result [x y & rest-input]]
                                     (cond
