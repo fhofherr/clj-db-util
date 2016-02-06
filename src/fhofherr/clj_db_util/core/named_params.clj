@@ -73,12 +73,12 @@
       (:parse-result next-parse))))
 
 (defn init-parse
-  [sql-str]
-  {:input (seq sql-str)})
+  [s]
+  {:input (seq s)})
 
-(defn parse-sql-str
-  [sql-str]
-  (let [parse-result (trampoline apply-accept-fn (-> sql-str
+(defn parse-str
+  [s]
+  (let [parse-result (trampoline apply-accept-fn (-> s
                                                      (init-parse)
                                                      (assoc :accept-fn accept-start)))
         [sql-str params] (reduce (fn [[ss ps] [tok-kw tok-v]]
@@ -87,5 +87,5 @@
                                      [(conj ss tok-v) ps]))
                                  [[] []]
                                  parse-result)]
-    {:sql-str (string/join "" sql-str)
-     :params  params}))
+    {:parsed-str (string/join "" sql-str)
+     :param-keys params}))

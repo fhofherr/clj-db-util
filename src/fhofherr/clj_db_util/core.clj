@@ -193,12 +193,12 @@
     `(transactional-bind ~outermost-tx-op ~outermost-op-factory)))
 
 (defn- match-sql-params
-  [sql sql-params]
-  (if (map? sql-params)
-    (let [{:keys [sql-str params]} (named-params/parse-sql-str sql)
-          param-vals (map #(get sql-params %) params)]
-      (concat [sql-str] param-vals))
-    (concat [sql] (seq sql-params))))
+  [s param-vals]
+  (if (map? param-vals)
+    (let [{:keys [parsed-str param-keys]} (named-params/parse-str s)
+          mapped-vals (map #(get param-vals %) param-keys)]
+      (concat [parsed-str] mapped-vals))
+    (concat [s] (seq param-vals))))
 
 (defn insert!
   [table & records]
@@ -217,8 +217,8 @@
     [tx-state]
     (let [[res] (jdbc/update! (:t-con tx-state) table value (seq where-clause))]
       [res tx-state])))
-  ([table value where-clause sql-params]
-    (let [where-clause-with-params (match-sql-params where-clause sql-params)]
+  ([table value where-clause param-vals]
+    (let [where-clause-with-params (match-sql-params where-clause param-vals)]
       (update! table value where-clause-with-params))))
 
 (defn delete!
@@ -229,27 +229,27 @@
     [tx-state]
     (let [[res] (jdbc/delete! (:t-con tx-state) table (seq where-clause))]
       [res tx-state])))
-  ([table where-clause sql-params]
-   (let [where-clause-with-params (match-sql-params where-clause sql-params)]
+  ([table where-clause param-vals]
+   (let [where-clause-with-params (match-sql-params where-clause param-vals)]
      (delete! table where-clause-with-params))))
 
 (defn query-str
-  ([sql]
-   (query-str sql nil))
-  ([sql sql-params]
+  ([sql-str]
+   (query-str sql-str nil))
+  ([sql-str param-vals]
    (transactional-operation
     [tx-state]
-    (let [sql-with-params (match-sql-params sql sql-params)
+    (let [sql-with-params (match-sql-params sql-str param-vals)
           res (jdbc/query (:t-con tx-state) sql-with-params)]
       [res tx-state]))))
 
 (defn execute-str!
-  ([sql]
-   (execute-str! sql nil))
-  ([sql sql-params]
+  ([sql-str]
+   (execute-str! sql-str nil))
+  ([sql-str param-vals]
    (transactional-operation
     [tx-state]
-    (let [sql-with-params (match-sql-params sql sql-params)
+    (let [sql-with-params (match-sql-params sql-str param-vals)
           [res] (jdbc/execute! (:t-con tx-state) sql-with-params)]
       [res tx-state]))))
 

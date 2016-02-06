@@ -2,37 +2,37 @@
   (:require [clojure.test :refer :all]
             [fhofherr.clj-db-util.core.named-params :as named-params]))
 
-(deftest parse-sql-str
+(deftest parse-str
 
   (testing "return named parameters in the order of occurence"
-    (is (= {:sql-str "?" :params  [:param1]}
-           (named-params/parse-sql-str ":param1")))
-    (is (= {:sql-str "? ?" :params [:param1 :param2]}
-           (named-params/parse-sql-str ":param1 :param2")))
-    (is (= {:sql-str "?,?" :params [:param1 :param2]}
-           (named-params/parse-sql-str ":param1,:param2"))))
+    (is (= {:parsed-str "?" :param-keys [:param1]}
+           (named-params/parse-str ":param1")))
+    (is (= {:parsed-str "? ?" :param-keys [:param1 :param2]}
+           (named-params/parse-str ":param1 :param2")))
+    (is (= {:parsed-str "?,?" :param-keys [:param1 :param2]}
+           (named-params/parse-str ":param1,:param2"))))
 
   (testing "parameters are treated independent of each other"
-    (is (= {:sql-str "? ?" :params [:param :param]}
-           (named-params/parse-sql-str ":param :param"))))
+    (is (= {:parsed-str "? ?" :param-keys [:param :param]}
+           (named-params/parse-str ":param :param"))))
 
   (testing "consecutive parameters are treated as one"
-    (is (= {:sql-str "?" :params [:param1:param2]}
-           (named-params/parse-sql-str ":param1:param2"))))
+    (is (= {:parsed-str "?" :param-keys [:param1:param2]}
+           (named-params/parse-str ":param1:param2"))))
 
   (testing "parameters in quotes are ignored"
-    (is (= {:sql-str "? ':ignored'" :params [:param]}
-           (named-params/parse-sql-str ":param ':ignored'")))
-    (is (= {:sql-str "? ''':ignored'''" :params [:param]}
-           (named-params/parse-sql-str ":param ''':ignored'''")))
-    (is (= {:sql-str "\":ignored\" ?" :params [:param]}
-           (named-params/parse-sql-str "\":ignored\" :param")))
-    (is (= {:sql-str "\"\"\":ignored\"\"\" ?" :params [:param]}
-           (named-params/parse-sql-str "\"\"\":ignored\"\"\" :param"))))
+    (is (= {:parsed-str "? ':ignored'" :param-keys [:param]}
+           (named-params/parse-str ":param ':ignored'")))
+    (is (= {:parsed-str "? ''':ignored'''" :param-keys [:param]}
+           (named-params/parse-str ":param ''':ignored'''")))
+    (is (= {:parsed-str "\":ignored\" ?" :param-keys [:param]}
+           (named-params/parse-str "\":ignored\" :param")))
+    (is (= {:parsed-str "\"\"\":ignored\"\"\" ?" :param-keys [:param]}
+           (named-params/parse-str "\"\"\":ignored\"\"\" :param"))))
 
   (testing "all other text is returned as-is"
-    (is (= {:sql-str "SELECT * FROM t_key_value_pairs" :params []}
-           (named-params/parse-sql-str "SELECT * FROM t_key_value_pairs")))))
+    (is (= {:parsed-str "SELECT * FROM t_key_value_pairs" :param-keys []}
+           (named-params/parse-str "SELECT * FROM t_key_value_pairs")))))
 
 (defn- input-consumed?
   [{:keys [input]}]
