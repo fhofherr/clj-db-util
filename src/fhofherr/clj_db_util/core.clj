@@ -1,6 +1,7 @@
 (ns fhofherr.clj-db-util.core
   (:require [clojure.java.jdbc :as jdbc]
             [clojure.tools.logging :as log]
+            [clojure.java.io :as io]
             [fhofherr.clj-db-util.core.named-params :as named-params])
   (:import (javax.sql DataSource)
            (org.flywaydb.core Flyway)
@@ -59,7 +60,7 @@
               (.setUsername user)
               (.setPassword password))
         ds (HikariDataSource. cfg)]
-    (let [db-cfg {:db-resource-path "classpath:/db"
+    (let [db-cfg {:db-resource-path "db"
                   :schema "default"
                   :datasource ds
                   :vendor (vendor-from-url url)}]
@@ -117,7 +118,7 @@
   {:pre [datasource]}
   {:datasource datasource})
 
-(defrecord TransactionState [t-con])
+(defrecord TransactionState [t-con db])
 (alter-meta! #'->TransactionState assoc :no-doc true)
 (alter-meta! #'map->TransactionState assoc :no-doc true)
 
@@ -250,13 +251,24 @@
    [tx-state]
    [nil (set-rollback-only! tx-state)]))
 
+(defn load-stmt
+  [stmt-name]
+  (transactional-operation
+    [tx-state]
+    (let [stmt-path (str (statements-loc (:db tx-state)) "/" stmt-name)
+          stmt-res (io/resource stmt-path)]
+      (when-not stmt-res
+        (throw (ex-info (format "Could not find statement resource '%s" stmt-path)
+                        {:cause #{:statement-not-found}})))
+      [(slurp stmt-res) tx-state])))
+
 (defn with-db-transaction
   [db tx-op]
   {:pre [(database? db)]}
   (io!
    (jdbc/with-db-transaction
      [t-con (db-spec db)]
-     (let [tx-state (map->TransactionState {:t-con t-con})
+     (let [tx-state (map->TransactionState {:t-con t-con :db db})
            [tx-result final-tx-state] (tx-op tx-state)]
        (if (rollback-only? final-tx-state)
          [tx-result err-transaction-rolled-back]

@@ -17,6 +17,8 @@ to [Semantic Versioning](http://semver.org/).
   pool.
 * Apply database migrations using [Flyway](http://flywaydb.org/).
 * Monad-like abstraction of database transactions.
+* Named parameters, e.g. `:param-name`.
+* Load statements from classpath resources.
 
 ## 0.1.0 - 2016-01-16
 

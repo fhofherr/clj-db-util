@@ -7,13 +7,13 @@
   (testing "default locations"
     (let [db (db-util/connect-to-db "jdbc:h2:mem:" "" "")]
       (try
-        (is (= "classpath:/db/h2/default/migrations" (db-util/migrations-loc db)))
-        (is (= "classpath:/db/h2/default/statements" (db-util/statements-loc db)))
+        (is (= "db/h2/default/migrations" (db-util/migrations-loc db)))
+        (is (= "db/h2/default/statements" (db-util/statements-loc db)))
         (finally
           (db-util/disconnect-from-db db)))))
 
   (testing "custom resource path"
-    (let [custom-path "classpath:/clj-db-util/test/db"
+    (let [custom-path "clj-db-util/test/db"
           db (-> (db-util/connect-to-db "jdbc:h2:mem:" "" "")
                  (assoc :db-resource-path custom-path))]
       (try
