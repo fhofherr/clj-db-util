@@ -4,6 +4,6 @@
 
 ## License
 
-Copyright © 2014 Ferdinand Hofherr
+Copyright © 2016 Ferdinand Hofherr
 
 Distributed under the MIT License.
