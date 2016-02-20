@@ -1,6 +1,7 @@
 .PHONY: vgup pgtest h2test unittest simple integration-test h2memtest coverage
 
 vgup:
+	vagrant box update
 	vagrant up
 
 pgtest: vgup
