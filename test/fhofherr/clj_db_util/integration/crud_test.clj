@@ -185,7 +185,7 @@
   (db-util/with-database
     [db (db-util/connect-to-db (env :db-url) (env :db-user) (env :db-pass))]
 
-    (testing "execute-str! without parameters"
+    (testing "execute! without parameters"
       (db-util/clean-db db)
       (db-util/migrate-db db)
 
@@ -196,7 +196,7 @@
         (is (= [1] n-inserted))
         (is (= [{:key "key" :value "value"}] res))))
 
-    (testing "execute-str! with positional parameters"
+    (testing "execute! with positional parameters"
       (db-util/clean-db db)
       (db-util/migrate-db db)
       (let [execute-update (db-util/execute! "UPDATE t_key_value_pairs SET value = 'another value' WHERE key = ?"
@@ -208,7 +208,7 @@
         (is (= [1] n-updated))
         (is (= [{:key "key" :value "another value"}] res))))
 
-    (testing "execute-str! with named parameters"
+    (testing "execute! with named parameters"
       (db-util/clean-db db)
       (db-util/migrate-db db)
       (let [execute-update (db-util/execute! "UPDATE t_key_value_pairs SET value = 'another value' WHERE key = :key"
@@ -218,4 +218,10 @@
             [res err3] (db-util/with-db-transaction db select)]
         (is (every? nil? [err1 err2 err3]))
         (is (= [1] n-updated))
-        (is (= [{:key "key" :value "another value"}] res))))))
+        (is (= [{:key "key" :value "another value"}] res)))
+
+      (let [execute-insert (db-util/execute! "INSERT INTO t_key_value_pairs(key, value) values (:key, :value);"
+                                             {:key "key15" :value "and another value"})
+            [n-inserted err1] (db-util/with-db-transaction db execute-insert)]
+        (is (every? nil? err1))
+        (is (= [1] n-inserted))))))

@@ -30,6 +30,10 @@
     (is (= {:parsed-str "\"\"\":ignored\"\"\" ?" :param-keys [:param]}
            (named-params/parse-str "\"\"\":ignored\"\"\" :param"))))
 
+  (testing "parameters may be delmited by braces"
+    (is (= {:parsed-str "(?)" :param-keys [:param]}
+           (named-params/parse-str "(:param)"))))
+
   (testing "all other text is returned as-is"
     (is (= {:parsed-str "SELECT * FROM t_key_value_pairs" :param-keys []}
            (named-params/parse-str "SELECT * FROM t_key_value_pairs")))))
@@ -64,11 +68,11 @@
 (deftest accept-whitespace
   (testing "accept only whitespace"
 
-    (let [next-parse (-> " \r\n\t,;"
+    (let [next-parse (-> " \r\n\t,;()[]{}"
                          (named-params/init-parse)
                          (named-params/accept-whitespace))]
       (is (final-parse? next-parse))
-      (is (parse-result= [[:whitespace " \r\n\t,;"]] next-parse)))))
+      (is (parse-result= [[:whitespace " \r\n\t,;()[]{}"]] next-parse)))))
 
 (deftest accept-named-parameter
   (testing "accept a colon followed by at least one non-whitespace character"
