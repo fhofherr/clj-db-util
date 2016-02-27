@@ -23,7 +23,8 @@
            (org.flywaydb.core Flyway)
            (com.zaxxer.hikari HikariDataSource HikariConfig)
            (org.flywaydb.core.api MigrationInfoService)
-           (clojure.lang Keyword)))
+           (clojure.lang Keyword)
+           (java.sql SQLException)))
 
 (defrecord Database [^DataSource datasource
                      ^String db-resource-path
@@ -216,7 +217,10 @@
   {:added "0.2.0"}
   [tx-state ^Exception ex]
   (log/warn ex "Exception occured during transaction")
-  ;; TODO repeatedly call and log getNextException (if possible) (see java.sql.BatchUpdateException)
+  (loop [e ex]
+    (when (instance? SQLException e)
+      (log/warn e)
+      (recur (.getNextException ^SQLException e))))
   (let [rolled-back (set-rollback-only! tx-state)]
     [nil rolled-back]))
 
