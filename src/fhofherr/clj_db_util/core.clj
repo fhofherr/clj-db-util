@@ -18,6 +18,7 @@
   (:require [clojure.java.jdbc :as jdbc]
             [clojure.tools.logging :as log]
             [clojure.java.io :as io]
+            [clojure.string :as string]
             [fhofherr.clj-db-util.core.named-params :as named-params])
   (:import (javax.sql DataSource)
            (org.flywaydb.core Flyway)
@@ -79,23 +80,29 @@
                (.setSchemas (into-array String [(:schema db)]))))]
     (assoc db :migrator fw)))
 
+(def ^:private default-db-opts {:db-resource-path "db"
+                                :schema           "default"
+                                :from-db-name     string/lower-case
+                                :to-db-name       identity})
+
 (defn connect-to-db
   "Create a connection pool for the database identified by `url`, `user`, and `password`."
   {:added "0.2.0"}
-  [^String url ^String user ^String password]
-  {:pre [url user password]}
-  (let [cfg (doto (HikariConfig.)
-              (.setJdbcUrl url)
-              (.setUsername user)
-              (.setPassword password))
-        ds (HikariDataSource. cfg)]
-    (let [db-cfg {:db-resource-path "db"
-                  :schema "default"
-                  :datasource ds
-                  :vendor (vendor-from-url url)}]
-      (-> db-cfg
-          (map->Database)
-          (add-migrator)))))
+  ([^String url ^String user ^String password]
+    (connect-to-db url user password {}))
+  ([^String url ^String user ^String password db-opts]
+   {:pre [url user password (map? db-opts)]}
+   (let [cfg (doto (HikariConfig.)
+               (.setJdbcUrl url)
+               (.setUsername user)
+               (.setPassword password))
+         ds (HikariDataSource. cfg)]
+     (-> default-db-opts
+         (merge db-opts)
+         (assoc :datasource ds
+                :vendor (vendor-from-url url))
+         (map->Database)
+         (add-migrator)))))
 
 (defn disconnect-from-db
   "Close the connection pool used to connect to the database."
@@ -295,7 +302,11 @@
   [jdbc-fn & args]
   (transactional-operation
    [tx-state]
-   (let [res (apply jdbc-fn (:t-con tx-state) args)]
+   (let [from-db-name (get-in tx-state [:db :from-db-name])
+         to-db-name (get-in tx-state [:db :to-db-name])
+         res (apply jdbc-fn
+                    (:t-con tx-state)
+                    (concat args [:identifiers from-db-name :entities to-db-name]))]
      [res tx-state])))
 
 (defn insert!
