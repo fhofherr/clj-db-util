@@ -74,9 +74,9 @@
         (is (every? nil? [err1 err2]))
         (is (= [{:key "key1" :value "value1"} {:key "key2" :value "value2"}] res))))))
 
-#_(deftest ^:integration insert-and-convert-column-names
+(deftest ^:integration insert-and-convert-columns-to-db-names
   (db-util/with-database
-    [db (db-util/connect-to-db (env :db-url) (env :db-user) (env :db-pass) {:from-db-name #(.replace % \- \_)})]
+    [db (db-util/connect-to-db (env :db-url) (env :db-user) (env :db-pass) {:to-db-name #(.replace % "-" "")})]
 
     (testing "insert multiple records at once"
       (db-util/clean-db db)
@@ -220,9 +220,9 @@
         (is (= [1] n-updated))
         (is (= [{:key "key" :value "another value"}] res))))))
 
-#_(deftest ^:integration update-and-convert-column-names
+(deftest ^:integration update-and-convert-column-names
   (db-util/with-database
-    [db (db-util/connect-to-db (env :db-url) (env :db-user) (env :db-pass) {:from-db-name #(.replace % "-" "")})]
+    [db (db-util/connect-to-db (env :db-url) (env :db-user) (env :db-pass) {:to-db-name #(.replace % "-" "")})]
 
     (testing "unconditional update"
       (db-util/clean-db db)
@@ -285,11 +285,20 @@
         (is (= [1] n-deleted))
         (is (empty? res))))))
 
-(deftest ^:integration delete-and-convert-column-names
+(deftest ^:integration delete-and-convert-table-names
   (db-util/with-database
-    [db (db-util/connect-to-db (env :db-url) (env :db-user) (env :db-pass) {:from-db-name #(.replace % "-" "")})]
+    [db (db-util/connect-to-db (env :db-url) (env :db-user) (env :db-pass) {:to-db-name #(.replace % \- \_)})]
 
-    ))
+    (testing "conditional delete"
+      (db-util/clean-db db)
+      (db-util/migrate-db db)
+      (let [delete (db-util/delete! :t-key-value-pairs "key = 'key'")
+            [_ err1] (db-util/with-db-transaction db insert)
+            [n-deleted err2] (db-util/with-db-transaction db delete)
+            [res err3] (db-util/with-db-transaction db select)]
+        (is (every? nil? [err1 err2 err3]))
+        (is (= [1] n-deleted))
+        (is (empty? res))))))
 
 (deftest ^:integration execute!
   (db-util/with-database

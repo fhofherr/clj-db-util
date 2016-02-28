@@ -362,7 +362,7 @@
          to-db-name (get-in tx-state [:db :to-db-name])
          res (apply jdbc-fn
                     (:t-con tx-state)
-                    (concat args [:identifiers from-db-name :entities to-db-name]))]
+                    args)]
      [res tx-state])))
 
 (defn insert!
@@ -370,7 +370,15 @@
   {:added "0.2.0"}
   [table & records]
   {:pre [table (not-empty records)]}
-  (apply wrap-jdbc-fn jdbc/insert! table records))
+  (transactional-let
+    [db-table (convert-to-db-name table)
+     db-records (if (map? (first records))
+                  (transactional-sequence (map convert-to-db-name records))
+                  (transactional-sequence (into [(convert-to-db-name (first records))]
+                                                (map #(transactional %) (rest records)))))
+     db-res (apply wrap-jdbc-fn jdbc/insert! db-table db-records)
+     res (transactional-sequence (map convert-from-db-name db-res))]
+    res))
 
 (defn update!
   "Update a value in a table."
@@ -381,7 +389,12 @@
    (update! table value where-clause nil))
   ([table value where-clause param-vals]
    {:pre [table value]}
-   (wrap-jdbc-fn jdbc/update! table value (prepare-params where-clause param-vals))))
+   (transactional-let
+     [db-table (convert-to-db-name table)
+      db-value (convert-to-db-name value)
+      db-res (wrap-jdbc-fn jdbc/update! db-table db-value (prepare-params where-clause param-vals))
+      res (transactional-sequence (map convert-from-db-name db-res))]
+     res)))
 
 (defn delete!
   "Delete a record from a table."
@@ -392,7 +405,11 @@
    (delete! table where-clause nil))
   ([table where-clause param-vals]
    {:pre [table]}
-   (wrap-jdbc-fn jdbc/delete! table (prepare-params where-clause param-vals))))
+   (transactional-let
+     [db-table (convert-to-db-name table)
+      db-res (wrap-jdbc-fn jdbc/delete! db-table (prepare-params where-clause param-vals))
+      res (transactional-sequence (map convert-from-db-name db-res))]
+     res)))
 
 (defn query
   "Execute a query given as a string. The query may contain either positional (e.g. `?`) or
@@ -402,7 +419,10 @@
    (query sql-str nil))
   ([sql-str param-vals]
    {:pre [sql-str]}
-   (wrap-jdbc-fn jdbc/query (prepare-params sql-str param-vals))))
+   (transactional-let
+     [db-res (wrap-jdbc-fn jdbc/query (prepare-params sql-str param-vals))
+      res (transactional-sequence (map convert-from-db-name db-res))]
+     res)))
 
 (defn execute!
   "Execute an arbitrary sql statement except for a query. The statement may contain either positional (e.g. `?`) or
