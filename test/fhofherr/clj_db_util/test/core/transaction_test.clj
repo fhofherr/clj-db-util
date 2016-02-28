@@ -85,3 +85,16 @@
             [res err] (db-util/with-db-transaction db chained-op)]
         (is (= [:x :y :z] res))
         (is (nil? err))))))
+
+(deftest transactional-sequence
+  (db-util/with-database
+    [db (db-util/connect-to-db "jdbc:h2:mem:" "" "")]
+
+    (testing "combine a sequence of transactional operations"
+      (let [op1 (db-util/transactional :op1)
+            op2 (db-util/transactional :op2)
+            seq-op (db-util/transactional-sequence [op1 op2])
+            [res err] (db-util/with-db-transaction db seq-op)
+            ]
+        (is (nil? err))
+        (is (= [:op1 :op2] res))))))

@@ -290,6 +290,21 @@
                                                        (rest reversed-bindings))]
     `(transactional-bind ~outermost-tx-op ~outermost-op-factory)))
 
+(defn transactional-sequence
+  "Combine a sequence of transactional operations into a single transactional operation collecting their results in a
+  seq."
+  {:added "0.2.0"}
+  [tx-ops]
+  (transactional-operation
+    [tx-state]
+    (letfn [(collect-ops [[results state] tx-op]
+              (let [[res next-state] (tx-op state)]
+                [(conj results res) next-state]))]
+      (let [[final-result final-state] (reduce collect-ops
+                                               [[] tx-state]
+                                               tx-ops)]
+        [(seq final-result) final-state]))))
+
 (defn- prepare-params
   [s param-vals]
   (if (map? param-vals)
