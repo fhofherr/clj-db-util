@@ -24,7 +24,7 @@
            (org.flywaydb.core Flyway)
            (com.zaxxer.hikari HikariDataSource HikariConfig)
            (org.flywaydb.core.api MigrationInfoService)
-           (clojure.lang Keyword)
+           (clojure.lang Keyword Named)
            (java.sql SQLException)))
 
 (defrecord Database [^DataSource datasource
@@ -297,6 +297,47 @@
           mapped-vals (map #(get param-vals %) param-keys)]
       (concat [parsed-str] mapped-vals))
     (concat [s] (seq param-vals))))
+
+(defn- convert-name
+  [direction x]
+  {:pre [(#{:to-db-name :from-db-name} direction)]}
+  (transactional-operation
+    [tx-state]
+    (let [restore-type (fn [orig-v v]
+                         (cond
+                           (symbol? orig-v) (symbol v)
+                           (keyword? orig-v) (keyword v)
+                           :else v))
+          conv-f (get-in tx-state [:db direction])
+          convert (fn [v] (if (and conv-f
+                                   (or (string? v)
+                                       (instance? Named v)))
+                            (->> v
+                                 (name)
+                                 (conv-f)
+                                 (restore-type v))
+                            v))
+          res (cond
+                (map? x) (->> x
+                              (map (fn [[k v]] [(convert k) v]))
+                              (into (empty x)))
+                (sequential? x) (map convert x)
+                :else (convert x))]
+      [res tx-state])))
+
+(defn convert-to-db-name
+  "Convert `x` to its database name. If `x` is a string, keyword, or symbol directly convert it. If
+  `x` is a map, convert the map's keys and return a map with the converted keys. If `x` is a sequential
+  collection, convert the collection's values and return a seq with the converted values."
+  [x]
+  (convert-name :to-db-name x))
+
+(defn convert-from-db-name
+  "Convert `x` from its database name. If `x` is a string, keyword, or symbol directly convert it. If
+  `x` is a map, convert the map's keys and return a map with the converted keys. If `x` is a sequential
+  collection, convert the collection's values and return a seq with the converted values."
+  [x]
+  (convert-name :from-db-name x))
 
 (defn- wrap-jdbc-fn
   [jdbc-fn & args]
