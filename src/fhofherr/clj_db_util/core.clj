@@ -303,7 +303,7 @@
       (let [[final-result final-state] (reduce collect-ops
                                                [[] tx-state]
                                                tx-ops)]
-        [(seq final-result) final-state]))))
+        [(sequence final-result) final-state]))))
 
 (defn- prepare-params
   [s param-vals]

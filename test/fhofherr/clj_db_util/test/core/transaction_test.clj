@@ -90,6 +90,13 @@
   (db-util/with-database
     [db (db-util/connect-to-db "jdbc:h2:mem:" "" "")]
 
+    (testing "an empty sequence yields an transactional operation with an empty sequence"
+      (let [seq-op (db-util/transactional-sequence [])
+            [res err] (db-util/with-db-transaction db seq-op)]
+        (is (nil? err))
+        (is (seq? res))
+        (is (empty? res))))
+
     (testing "combine a sequence of transactional operations"
       (let [op1 (db-util/transactional :op1)
             op2 (db-util/transactional :op2)
