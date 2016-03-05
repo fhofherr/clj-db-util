@@ -58,6 +58,14 @@
             [query-result err2] (db-util/with-db-transaction db read-key-value-pair)]
 
         (is (nil? no-result))
-        (is (= db-util/err-transaction-rolled-back err1))
+        (is (= {:error "Transaction rolled back"} err1))
         (is (nil? err2))
-        (is (empty? query-result))))))
+        (is (empty? query-result))))
+
+    (testing "rollback with custom cause"
+      (db-util/clean-db db)
+      (db-util/migrate-db db)
+
+      (let [custom-cause "custom rollback cause"
+            [_ err] (db-util/with-db-transaction db (db-util/rollback! custom-cause))]
+        (is (= {:error custom-cause} err))))))

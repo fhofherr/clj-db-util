@@ -201,7 +201,7 @@
   {:pre [datasource]}
   {:datasource datasource})
 
-(defrecord TransactionState [t-con db])
+(defrecord TransactionState [t-con db rollback-msg])
 (alter-meta! #'->TransactionState assoc :no-doc true)
 (alter-meta! #'map->TransactionState assoc :no-doc true)
 
@@ -211,18 +211,18 @@
   [tx-state]
   (instance? TransactionState tx-state))
 
-(def err-transaction-rolled-back {:error "Transaction rolled back"})
-
 (defn- rollback-only?
   [{:keys [t-con]}]
   {:pre [t-con]}
   (jdbc/db-is-rollback-only t-con))
 
 (defn- set-rollback-only!
-  [{:keys [t-con] :as tx-state}]
+  [{:keys [t-con] :as tx-state} rollback-cause]
   {:pre [t-con (transaction-state? tx-state)]}
-  (jdbc/db-set-rollback-only! t-con)
-  tx-state)
+  (let [cause (or rollback-cause "Transaction rolled back")]
+    (log/infof "Set transaction to rollback only. Reason: %s" cause)
+    (jdbc/db-set-rollback-only! t-con)
+    (assoc tx-state :rollback-msg cause)))
 
 (defn ^:dynamic *exception-during-transaction*
   "Handle exceptions that occur during a database transaction. The default implementation
@@ -236,7 +236,7 @@
     (when (instance? SQLException e)
       (log/warn e)
       (recur (.getNextException ^SQLException e))))
-  (let [rolled-back (set-rollback-only! tx-state)]
+  (let [rolled-back (set-rollback-only! tx-state (.getMessage ex))]
     [nil rolled-back]))
 
 (defmacro transactional-operation
@@ -532,12 +532,15 @@
     res)))
 
 (defn rollback!
-  "Rollback the transaction. Further transactional operations will not be executed anymore."
+  "Rollback the transaction. Further transactional operations will not be executed anymore.
+  Optionally a `rollback-cause` may be given."
   {:added "0.2.0"}
-  []
-  (transactional-operation
-   [tx-state]
-   [nil (set-rollback-only! tx-state)]))
+  ([]
+    (rollback! nil))
+  ([rollback-cause]
+    (transactional-operation
+     [tx-state]
+     [nil (set-rollback-only! tx-state rollback-cause)])))
 
 (defn load-stmt
   "Load a sql statement from a resource. The statement may contain either positional or named parameters."
@@ -553,7 +556,11 @@
      [(slurp stmt-res) tx-state])))
 
 (defn with-db-transaction
-  "Exectue `tx-op` within a database transaction."
+  "Exectue `tx-op` within a database transaction. Returns `[result error]` where
+  `result` is the result of the last evaluated transactional operation. If the transaction was rolled-back
+  or an exception occured `error` is a dictionary of the form `{:error rollback-cause}` where rollback cause
+  specifies the cause for the rollback. If an execption occured `rollback-cause` is the
+  exception's message."
   {:added "0.2.0"}
   [db tx-op]
   {:pre [(database? db)]}
@@ -562,6 +569,6 @@
      [t-con (db-spec db)]
      (let [tx-state (map->TransactionState {:t-con t-con :db db})
            [tx-result final-tx-state] (tx-op tx-state)]
-       (if (#'rollback-only? final-tx-state)
-         [tx-result err-transaction-rolled-back]
+       (if (rollback-only? final-tx-state)
+         [tx-result {:error (:rollback-msg final-tx-state)}]
          [tx-result nil])))))

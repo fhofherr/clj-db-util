@@ -18,4 +18,4 @@
     (testing "throws ex-info if resource could not be found"
       (let [[res err] (db-util/with-db-transaction db (db-util/load-stmt "not-there.sql"))]
         (is (nil? res))
-        (is (= db-util/err-transaction-rolled-back err))))))
+        (is (= {:error "Could not find statement resource 'db/h2/default/statements/not-there.sql"} err))))))

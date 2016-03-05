@@ -15,17 +15,18 @@
         (is (nil? err))))
 
     (testing "rollback the transaction if an Exception occurs"
-      (let [tx-op (db-util/transactional-operation [tx-state] (throw (Exception. "Kaboom, Baby!")))
+      (let [ex-msg "Kaboom baby!"
+            tx-op (db-util/transactional-operation [tx-state] (throw (Exception. ex-msg)))
             [res err] (db-util/with-db-transaction db tx-op)]
         (is (nil? res))
-        (is (= db-util/err-transaction-rolled-back err))))
+        (is (= {:error ex-msg} err))))
 
     (testing "transactional operations don't execute if transaction is rolled back"
       (let [value (atom :unchanged)
             rollback (db-util/rollback!)
             does-nothing (db-util/transactional (reset! value :changed))
             [_ err] (db-util/with-db-transaction db (db-util/transactional-bind rollback (fn [_] does-nothing)))]
-        (is (= db-util/err-transaction-rolled-back))
+        (is (= {:error "Transaction rolled back"} err))
         (is (= :unchanged @value))))
 
     (testing "call the *exception-during-transaction* handler"
@@ -34,7 +35,8 @@
                       (reset! handler-args [tx-state e])
                       ;; Note: does mark the transaction as rolled back.
                       ["new-result" tx-state])
-            exception (Exception. "Kaboom baby!")
+            ex-msg "Kaboom baby!"
+            exception (Exception. ex-msg)
             tx-op (db-util/transactional-operation [tx-state] (throw exception))]
         (binding [db-util/*exception-during-transaction* handler]
           (let [[res err] (db-util/with-db-transaction db tx-op)]
