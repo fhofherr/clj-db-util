@@ -265,6 +265,90 @@
   [form]
   `(transactional-operation [tx-state#] [~form tx-state#]))
 
+(defmacro transactional-trace
+  "Transactional trace level logging using print-style args.
+  Wrapper around [clojure.tools.logging/trace](http://clojure.github.io/tools.logging/#clojure.tools.logging/trace)."
+  {:added "0.2.0"}
+  [& args]
+  `(transactional (log/trace ~@args)))
+
+(defmacro transactional-debug
+  "Transactional debug level logging using print-style args.
+  Wrapper around [clojure.tools.logging/debug](http://clojure.github.io/tools.logging/#clojure.tools.logging/debug)."
+  {:added "0.2.0"}
+  [& args]
+  `(transactional (log/debug ~@args)))
+
+(defmacro transactional-info
+  "Transactional info level logging using print-style args.
+  Wrapper around [clojure.tools.logging/info](http://clojure.github.io/tools.logging/#clojure.tools.logging/info)."
+  {:added "0.2.0"}
+  [& args]
+  `(transactional (log/info ~@args)))
+
+(defmacro transactional-warn
+  "Transactional warn level logging using print-style args.
+  Wrapper around [clojure.tools.logging/warn](http://clojure.github.io/tools.logging/#clojure.tools.logging/warn)."
+  {:added "0.2.0"}
+  [& args]
+  `(transactional (log/warn ~@args)))
+
+(defmacro transactional-error
+  "Transactional error level logging using print-style args.
+  Wrapper around [clojure.tools.logging/error](http://clojure.github.io/tools.logging/#clojure.tools.logging/error)."
+  {:added "0.2.0"}
+  [& args]
+  `(transactional (log/error ~@args)))
+
+(defmacro transactional-fatal
+  "Transactional fatal level logging using print-style args.
+  Wrapper around [clojure.tools.logging/fatal](http://clojure.github.io/tools.logging/#clojure.tools.logging/fatal)."
+  {:added "0.2.0"}
+  [& args]
+  `(transactional (log/fatal ~@args)))
+
+(defmacro transactional-tracef
+  "Transactional trace level logging using format.
+  Wrapper around [clojure.tools.logging/tracef](http://clojure.github.io/tools.logging/#clojure.tools.logging/tracef)."
+  {:added "0.2.0"}
+  [& args]
+  `(transactional (log/tracef ~@args)))
+
+(defmacro transactional-debugf
+  "Transactional debug level logging using format.
+  Wrapper around [clojure.tools.logging/debugf](http://clojure.github.io/tools.logging/#clojure.tools.logging/debugf)."
+  {:added "0.2.0"}
+  [& args]
+  `(transactional (log/debugf ~@args)))
+
+(defmacro transactional-infof
+  "Transactional info level logging using format.
+  Wrapper around [clojure.tools.logging/infof](http://clojure.github.io/tools.logging/#clojure.tools.logging/infof)."
+  {:added "0.2.0"}
+  [& args]
+  `(transactional (log/infof ~@args)))
+
+(defmacro transactional-warnf
+  "Transactional warn level logging using format.
+  Wrapper around [clojure.tools.logging/warnf](http://clojure.github.io/tools.logging/#clojure.tools.logging/warnf)."
+  {:added "0.2.0"}
+  [& args]
+  `(transactional (log/warnf ~@args)))
+
+(defmacro transactional-errorf
+  "Transactional error level logging using format.
+  Wrapper around [clojure.tools.logging/errorf](http://clojure.github.io/tools.logging/#clojure.tools.logging/errorf)."
+  {:added "0.2.0"}
+  [& args]
+  `(transactional (log/errorf ~@args)))
+
+(defmacro transactional-fatalf
+  "Transactional fatal level logging using format.
+  Wrapper around [clojure.tools.logging/fatalf](http://clojure.github.io/tools.logging/#clojure.tools.logging/fatalf)."
+  {:added "0.2.0"}
+  [& args]
+  `(transactional (log/fatalf ~@args)))
+
 (defn transactional-bind
   "Combine two transactional operations. `f` is expected to be a function `x -> tx-op*`
   where `x` is the result of `tx-op`."
@@ -366,9 +450,7 @@
   [jdbc-fn & args]
   (transactional-operation
    [tx-state]
-   (let [from-db-name (get-in tx-state [:db :from-db-name])
-         to-db-name (get-in tx-state [:db :to-db-name])
-         res (apply jdbc-fn
+   (let [res (apply jdbc-fn
                     (:t-con tx-state)
                     args)]
      [res tx-state])))
@@ -379,7 +461,8 @@
   [table & records]
   {:pre [table (not-empty records)]}
   (transactional-let
-    [db-table (convert-to-db-name table)
+    [_ (transactional-debugf "Inserting %s into table %s" records table)
+     db-table (convert-to-db-name table)
      db-records (if (map? (first records))
                   (transactional-sequence (map convert-to-db-name records))
                   (transactional-sequence (into [(convert-to-db-name (first records))]
@@ -398,7 +481,8 @@
   ([table value where-clause param-vals]
    {:pre [table value]}
    (transactional-let
-     [db-table (convert-to-db-name table)
+     [_ (transactional-debugf "Updating %s with %s where %s %s" table value where-clause param-vals)
+      db-table (convert-to-db-name table)
       db-value (convert-to-db-name value)
       db-res (wrap-jdbc-fn jdbc/update! db-table db-value (prepare-params where-clause param-vals))
       res (transactional-sequence (map convert-from-db-name db-res))]
@@ -414,7 +498,8 @@
   ([table where-clause param-vals]
    {:pre [table]}
    (transactional-let
-     [db-table (convert-to-db-name table)
+     [_ (transactional-debugf "Deleting from %s where %s %s" table where-clause param-vals)
+      db-table (convert-to-db-name table)
       db-res (wrap-jdbc-fn jdbc/delete! db-table (prepare-params where-clause param-vals))
       res (transactional-sequence (map convert-from-db-name db-res))]
      res)))
@@ -428,7 +513,8 @@
   ([sql-str param-vals]
    {:pre [sql-str]}
    (transactional-let
-     [db-res (wrap-jdbc-fn jdbc/query (prepare-params sql-str param-vals))
+     [_ (transactional-debugf "Querying %s %s" sql-str param-vals)
+      db-res (wrap-jdbc-fn jdbc/query (prepare-params sql-str param-vals))
       res (transactional-sequence (map convert-from-db-name db-res))]
      res)))
 
@@ -440,7 +526,10 @@
    (execute! sql-str nil))
   ([sql-str param-vals]
    {:pre [sql-str]}
-   (wrap-jdbc-fn jdbc/execute! (prepare-params sql-str param-vals))))
+   (transactional-let
+     [_ (transactional-debugf "Executing %s %s" sql-str param-vals)
+      res (wrap-jdbc-fn jdbc/execute! (prepare-params sql-str param-vals))]
+     res)))
 
 (defn rollback!
   "Rollback the transaction. Further transactional operations will not be executed anymore."
