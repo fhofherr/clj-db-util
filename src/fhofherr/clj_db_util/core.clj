@@ -97,7 +97,7 @@
     in the program to a db internal representation"
   {:added "0.2.0"}
   ([^String url ^String user ^String password]
-    (connect-to-db url user password {}))
+   (connect-to-db url user password {}))
   ([^String url ^String user ^String password db-opts]
    {:pre [url user password (map? db-opts)]}
    (let [cfg (doto (HikariConfig.)
@@ -388,14 +388,14 @@
   {:added "0.2.0"}
   [tx-ops]
   (transactional-operation
-    [tx-state]
-    (letfn [(collect-ops [[results state] tx-op]
-              (let [[res next-state] (tx-op state)]
-                [(conj results res) next-state]))]
-      (let [[final-result final-state] (reduce collect-ops
-                                               [[] tx-state]
-                                               tx-ops)]
-        [(sequence final-result) final-state]))))
+   [tx-state]
+   (letfn [(collect-ops [[results state] tx-op]
+             (let [[res next-state] (tx-op state)]
+               [(conj results res) next-state]))]
+     (let [[final-result final-state] (reduce collect-ops
+                                              [[] tx-state]
+                                              tx-ops)]
+       [(sequence final-result) final-state]))))
 
 (defn- prepare-params
   [s param-vals]
@@ -409,28 +409,28 @@
   [direction x]
   {:pre [(#{:to-db-name :from-db-name} direction)]}
   (transactional-operation
-    [tx-state]
-    (let [restore-type (fn [orig-v v]
-                         (cond
-                           (symbol? orig-v) (symbol v)
-                           (keyword? orig-v) (keyword v)
-                           :else v))
-          conv-f (get-in tx-state [:db direction])
-          convert (fn [v] (if (and conv-f
-                                   (or (string? v)
-                                       (instance? Named v)))
-                            (->> v
-                                 (name)
-                                 (conv-f)
-                                 (restore-type v))
-                            v))
-          res (cond
-                (map? x) (->> x
-                              (map (fn [[k v]] [(convert k) v]))
-                              (into (empty x)))
-                (sequential? x) (map convert x)
-                :else (convert x))]
-      [res tx-state])))
+   [tx-state]
+   (let [restore-type (fn [orig-v v]
+                        (cond
+                          (symbol? orig-v) (symbol v)
+                          (keyword? orig-v) (keyword v)
+                          :else v))
+         conv-f (get-in tx-state [:db direction])
+         convert (fn [v] (if (and conv-f
+                                  (or (string? v)
+                                      (instance? Named v)))
+                           (->> v
+                                (name)
+                                (conv-f)
+                                (restore-type v))
+                           v))
+         res (cond
+               (map? x) (->> x
+                             (map (fn [[k v]] [(convert k) v]))
+                             (into (empty x)))
+               (sequential? x) (map convert x)
+               :else (convert x))]
+     [res tx-state])))
 
 (defn convert-to-db-name
   "Convert `x` to its database name. If `x` is a string, keyword, or symbol directly convert it. If
@@ -461,15 +461,15 @@
   [table & records]
   {:pre [table (not-empty records)]}
   (transactional-let
-    [_ (transactional-debugf "Inserting %s into table %s" records table)
-     db-table (convert-to-db-name table)
-     db-records (if (map? (first records))
-                  (transactional-sequence (map convert-to-db-name records))
-                  (transactional-sequence (into [(convert-to-db-name (first records))]
-                                                (map #(transactional %) (rest records)))))
-     db-res (apply wrap-jdbc-fn jdbc/insert! db-table db-records)
-     res (transactional-sequence (map convert-from-db-name db-res))]
-    res))
+   [_ (transactional-debugf "Inserting %s into table %s" records table)
+    db-table (convert-to-db-name table)
+    db-records (if (map? (first records))
+                 (transactional-sequence (map convert-to-db-name records))
+                 (transactional-sequence (into [(convert-to-db-name (first records))]
+                                               (map #(transactional %) (rest records)))))
+    db-res (apply wrap-jdbc-fn jdbc/insert! db-table db-records)
+    res (transactional-sequence (map convert-from-db-name db-res))]
+   res))
 
 (defn update!
   "Update a value in a table."
@@ -481,12 +481,12 @@
   ([table value where-clause param-vals]
    {:pre [table value]}
    (transactional-let
-     [_ (transactional-debugf "Updating %s with %s where %s %s" table value where-clause param-vals)
-      db-table (convert-to-db-name table)
-      db-value (convert-to-db-name value)
-      db-res (wrap-jdbc-fn jdbc/update! db-table db-value (prepare-params where-clause param-vals))
-      res (transactional-sequence (map convert-from-db-name db-res))]
-     res)))
+    [_ (transactional-debugf "Updating %s with %s where %s %s" table value where-clause param-vals)
+     db-table (convert-to-db-name table)
+     db-value (convert-to-db-name value)
+     db-res (wrap-jdbc-fn jdbc/update! db-table db-value (prepare-params where-clause param-vals))
+     res (transactional-sequence (map convert-from-db-name db-res))]
+    res)))
 
 (defn delete!
   "Delete a record from a table."
@@ -498,11 +498,11 @@
   ([table where-clause param-vals]
    {:pre [table]}
    (transactional-let
-     [_ (transactional-debugf "Deleting from %s where %s %s" table where-clause param-vals)
-      db-table (convert-to-db-name table)
-      db-res (wrap-jdbc-fn jdbc/delete! db-table (prepare-params where-clause param-vals))
-      res (transactional-sequence (map convert-from-db-name db-res))]
-     res)))
+    [_ (transactional-debugf "Deleting from %s where %s %s" table where-clause param-vals)
+     db-table (convert-to-db-name table)
+     db-res (wrap-jdbc-fn jdbc/delete! db-table (prepare-params where-clause param-vals))
+     res (transactional-sequence (map convert-from-db-name db-res))]
+    res)))
 
 (defn query
   "Execute a query given as a string. The query may contain either positional (e.g. `?`) or
@@ -513,10 +513,10 @@
   ([sql-str param-vals]
    {:pre [sql-str]}
    (transactional-let
-     [_ (transactional-debugf "Querying %s %s" sql-str param-vals)
-      db-res (wrap-jdbc-fn jdbc/query (prepare-params sql-str param-vals))
-      res (transactional-sequence (map convert-from-db-name db-res))]
-     res)))
+    [_ (transactional-debugf "Querying %s %s" sql-str param-vals)
+     db-res (wrap-jdbc-fn jdbc/query (prepare-params sql-str param-vals))
+     res (transactional-sequence (map convert-from-db-name db-res))]
+    res)))
 
 (defn execute!
   "Execute an arbitrary sql statement except for a query. The statement may contain either positional (e.g. `?`) or
@@ -527,9 +527,9 @@
   ([sql-str param-vals]
    {:pre [sql-str]}
    (transactional-let
-     [_ (transactional-debugf "Executing %s %s" sql-str param-vals)
-      res (wrap-jdbc-fn jdbc/execute! (prepare-params sql-str param-vals))]
-     res)))
+    [_ (transactional-debugf "Executing %s %s" sql-str param-vals)
+     res (wrap-jdbc-fn jdbc/execute! (prepare-params sql-str param-vals))]
+    res)))
 
 (defn rollback!
   "Rollback the transaction. Further transactional operations will not be executed anymore."
@@ -544,13 +544,13 @@
   {:added "0.2.0"}
   [stmt-name]
   (transactional-operation
-    [tx-state]
-    (let [stmt-path (str (statements-loc (:db tx-state)) "/" stmt-name)
-          stmt-res (io/resource stmt-path)]
-      (when-not stmt-res
-        (throw (ex-info (format "Could not find statement resource '%s" stmt-path)
-                        {:cause #{:statement-not-found}})))
-      [(slurp stmt-res) tx-state])))
+   [tx-state]
+   (let [stmt-path (str (statements-loc (:db tx-state)) "/" stmt-name)
+         stmt-res (io/resource stmt-path)]
+     (when-not stmt-res
+       (throw (ex-info (format "Could not find statement resource '%s" stmt-path)
+                       {:cause #{:statement-not-found}})))
+     [(slurp stmt-res) tx-state])))
 
 (defn with-db-transaction
   "Exectue `tx-op` within a database transaction."
