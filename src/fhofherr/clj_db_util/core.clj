@@ -86,7 +86,15 @@
                                 :to-db-name       identity})
 
 (defn connect-to-db
-  "Create a connection pool for the database identified by `url`, `user`, and `password`."
+  "Create a connection pool for the database identified by `url`, `user`, and `password`.
+  `db-opts` may contain one of the following keys to configure the database:
+
+  * `:db-resource-path`: path to the database resources on the classpath
+  * `:schema`: name of the schema managed by this database
+  * `:from-db-name`: function that converts column and table names from their db
+    internal representation to a presentation used by the program
+  * `:to-db-name`: function that converts column and table names from their representation
+    in the program to a db internal representation"
   {:added "0.2.0"}
   ([^String url ^String user ^String password]
     (connect-to-db url user password {}))
