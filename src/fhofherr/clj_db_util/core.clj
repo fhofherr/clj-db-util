@@ -542,6 +542,16 @@
      [tx-state]
      [nil (set-rollback-only! tx-state rollback-cause)])))
 
+(defmacro rollback-when!
+  "Rollback the transaction if `condition` is met. Optionally a `rollback-cause` may be given."
+  {:added "0.2.0"}
+  ([condition]
+    `(rollback-when! ~condition nil))
+  ([condition rollback-cause]
+    `(if ~condition
+       (rollback! ~rollback-cause)
+       (transactional nil))))
+
 (defn load-stmt
   "Load a sql statement from a resource. The statement may contain either positional or named parameters."
   {:added "0.2.0"}

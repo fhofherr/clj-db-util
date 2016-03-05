@@ -45,6 +45,31 @@
             (is (= "new-result" res))
             (is (nil? err))))))))
 
+(deftest rollback-when!
+
+  (db-util/with-database
+    [db (db-util/connect-to-db "jdbc:h2:mem:" "" "")]
+
+    (testing "rolls the transaction back if condition is met"
+      (let [tx-op (db-util/rollback-when! true)
+            [res err] (db-util/with-db-transaction db tx-op)]
+        (is (nil? res))
+        (is (= {:error "Transaction rolled back"} err)))
+
+      (let [cause "Condition met"
+            tx-op (db-util/rollback-when! true cause)
+            [res err] (db-util/with-db-transaction db tx-op)]
+        (is (nil? res))
+        (is (= {:error cause} err))))
+
+    (testing "continues with the transaction if condition is not met"
+      (let [tx-op (db-util/transactional-let [_ (db-util/rollback-when! false)
+                                              res (db-util/transactional :result)]
+                                             res)
+            [res err] (db-util/with-db-transaction db tx-op)]
+        (is (nil? err))
+        (is (= :result res))))))
+
 (deftest transactional
   (db-util/with-database
     [db (db-util/connect-to-db "jdbc:h2:mem:" "" "")]
